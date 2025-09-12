@@ -1,0 +1,25 @@
+/node_modules
+**/node_modules/
+/dist
+/build
+*.log
+.env
+*.env.local
+*.env.development
+*.env.production
+.DS_Store
+*.swp
+*.swo
+# Android
+apps/mobile/android/app/build
+apps/mobile/android/.gradle
+apps/mobile/android/local.properties
+# iOS
+apps/mobile/ios/build
+apps/mobile/ios/Pods
+apps/mobile/ios/Podfile.lock
+# Backend
+backend/node_modules
+backend/dist
+# Test
+coverage
