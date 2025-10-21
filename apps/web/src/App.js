@@ -10,6 +10,11 @@ import Reports from './pages/Reports';
 import Users from './pages/Users';
 import Templates from './pages/Templates';
 import Marketplace from './pages/Marketplace';
+import MarketplaceDetail from './pages/MarketplaceDetail';
+import SellPage from './pages/SellPage';
+import MySales from './pages/MySales';
+import PaymentSandbox from './pages/PaymentSandbox';
+import PaymentResult from './pages/PaymentResult';
 import FormData from './pages/FormData';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -46,9 +51,15 @@ function App() {
                             <Route path="/create-landing" element={<Navigate to="/pages/create" replace />} />
                             <Route path="/templates" element={<Templates />} />
                             <Route path="/market" element={<Marketplace />} />
+                            <Route path="/marketplace" element={<Marketplace />} />
+                            <Route path="/marketplace/:id" element={<MarketplaceDetail />} />
+                            <Route path="/sell-page" element={<SellPage />} />
+                            <Route path="/my-sales" element={<MySales />} />
                             <Route path="/setting-form" element={<FormData />} />
-
                             <Route path="/payments" element={<Payments />} />
+                            <Route path="/payment/sandbox" element={<PaymentSandbox />} />
+                            <Route path="/payment/result" element={<PaymentResult />} />
+
                             {/* Admin route */}
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/qltemplates" element={<AdminAddTemplate />} />
