@@ -25,6 +25,7 @@ import Contact from './components/about_public/Contact';
 import PageAbout from './components/about_public/Pages ';
 import Blog from './components/about_public/Blog';
 import AdminAddTemplate from './components/AdminAddTemplate'; // Thêm component cho admin
+import AdminMarketplace from './pages/AdminMarketplace';
 
 function App() {
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -63,6 +64,7 @@ function App() {
                             {/* Admin route */}
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/qltemplates" element={<AdminAddTemplate />} />
+                            <Route path="/admin/marketplace" element={<AdminMarketplace />} />
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/users" element={<Users />} />
                             {/* Catch-all route */}

@@ -3,6 +3,9 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const AWS = require('aws-sdk');
+
+const s3 = new AWS.S3();
 
 class ExportService {
     constructor() {
@@ -15,8 +18,11 @@ class ExportService {
 
     /**
      * Export as HTML + Images (ZIP file)
+     * @param {Object} marketplacePage - Marketplace page object
+     * @param {Object} pageData - Page data (for metadata)
+     * @param {String} s3FilePath - S3 path to HTML file (e.g., "s3://bucket/path/index.html")
      */
-    async exportAsHTMLZip(marketplacePage, pageData) {
+    async exportAsHTMLZip(marketplacePage, pageData, s3FilePath) {
         const exportId = uuidv4();
         const exportDir = path.join(this.tempDir, exportId);
         const zipPath = path.join(this.tempDir, `${exportId}.zip`);
@@ -26,8 +32,18 @@ class ExportService {
             fs.mkdirSync(exportDir, { recursive: true });
             fs.mkdirSync(path.join(exportDir, 'images'), { recursive: true });
 
-            // Extract and download images
-            const imageUrls = this.extractImageUrls(pageData);
+            // Lấy HTML từ S3
+            let htmlContent;
+            if (s3FilePath) {
+                htmlContent = await this.getHTMLFromS3(s3FilePath);
+            } else {
+                // Fallback: generate from pageData (legacy)
+                console.warn('No S3 path provided, using pageData fallback');
+                htmlContent = this.generateHTMLFile(pageData, {});
+            }
+
+            // Extract image URLs from HTML
+            const imageUrls = this.extractImageUrlsFromHTML(htmlContent);
             const imageMap = {};
 
             for (let i = 0; i < imageUrls.length; i++) {
@@ -43,9 +59,13 @@ class ExportService {
                 }
             }
 
-            // Generate HTML with local image paths
-            const html = this.generateHTMLFile(pageData, imageMap);
-            fs.writeFileSync(path.join(exportDir, 'index.html'), html, 'utf8');
+            // Replace image URLs with local paths
+            let finalHTML = htmlContent;
+            Object.entries(imageMap).forEach(([oldUrl, newPath]) => {
+                finalHTML = finalHTML.replace(new RegExp(oldUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), newPath);
+            });
+
+            fs.writeFileSync(path.join(exportDir, 'index.html'), finalHTML, 'utf8');
 
             // Create README
             const readme = this.generateReadme(marketplacePage);
@@ -72,14 +92,27 @@ class ExportService {
 
     /**
      * Export as .iuhpage format (JSON with embedded data)
+     * @param {Object} marketplacePage - Marketplace page object
+     * @param {Object} pageData - Page data
+     * @param {String} s3FilePath - S3 path to HTML file
      */
-    async exportAsIUHPage(marketplacePage, pageData) {
+    async exportAsIUHPage(marketplacePage, pageData, s3FilePath) {
         const exportId = uuidv4();
         const filePath = path.join(this.tempDir, `${exportId}.iuhpage`);
 
         try {
+            // Lấy HTML từ S3
+            let htmlContent;
+            if (s3FilePath) {
+                htmlContent = await this.getHTMLFromS3(s3FilePath);
+            } else {
+                // Fallback
+                console.warn('No S3 path provided, using pageData fallback');
+                htmlContent = this.generateHTMLFile(pageData, {});
+            }
+
             // Extract and download images as base64
-            const imageUrls = this.extractImageUrls(pageData);
+            const imageUrls = this.extractImageUrlsFromHTML(htmlContent);
             const embeddedImages = {};
 
             for (const url of imageUrls) {
@@ -104,8 +137,8 @@ class ExportService {
                     originalId: marketplacePage._id
                 },
                 pageData: pageData,
-                embeddedImages: embeddedImages,
-                html: this.pageDataToHTML(pageData)
+                htmlContent: htmlContent,  // HTML thật từ S3
+                embeddedImages: embeddedImages
             };
 
             // Write to file
@@ -145,6 +178,66 @@ class ExportService {
 
         if (pageData.elements && Array.isArray(pageData.elements)) {
             pageData.elements.forEach(element => extractFromElement(element));
+        }
+
+        return Array.from(urls);
+    }
+
+    /**
+     * Get HTML from S3
+     */
+    async getHTMLFromS3(s3FilePath) {
+        try {
+            // Parse S3 path: s3://bucket/key
+            const bucketName = process.env.AWS_S3_BUCKET;
+            let s3Key;
+
+            if (s3FilePath.includes('landinghub-iconic')) {
+                s3Key = s3FilePath.split('s3://landinghub-iconic/')[1];
+            } else {
+                s3Key = s3FilePath.split(`s3://${bucketName}/`)[1];
+            }
+
+            // Ensure key ends with index.html
+            if (!s3Key.endsWith('index.html')) {
+                s3Key = `${s3Key}/index.html`;
+            }
+
+            console.log(`Fetching HTML from S3: ${s3Key}`);
+
+            const s3Response = await s3.getObject({
+                Bucket: bucketName,
+                Key: s3Key
+            }).promise();
+
+            return s3Response.Body.toString('utf-8');
+        } catch (error) {
+            console.error('Error fetching HTML from S3:', error);
+            throw new Error(`Failed to fetch HTML from S3: ${error.message}`);
+        }
+    }
+
+    /**
+     * Extract image URLs from HTML string
+     */
+    extractImageUrlsFromHTML(html) {
+        const urls = new Set();
+
+        // Match <img src="...">
+        const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi;
+        let match;
+        while ((match = imgRegex.exec(html)) !== null) {
+            if (match[1] && match[1].startsWith('http')) {
+                urls.add(match[1]);
+            }
+        }
+
+        // Match background-image: url(...)
+        const bgRegex = /background-image:\s*url\(['"]?([^'"]+)['"]?\)/gi;
+        while ((match = bgRegex.exec(html)) !== null) {
+            if (match[1] && match[1].startsWith('http')) {
+                urls.add(match[1]);
+            }
         }
 
         return Array.from(urls);
@@ -271,15 +364,47 @@ class ExportService {
     }
 
     /**
-     * Convert page_data to HTML
+     * Convert page_data to HTML (fallback only - use HTML from S3 instead)
      */
     pageDataToHTML(pageData) {
         if (!pageData || !pageData.elements) {
             return '<h1>Empty Page</h1>';
         }
 
-        const screenshotService = require('./screenshotService');
-        return pageData.elements.map(element => screenshotService.elementToHTML(element)).join('\n');
+        // Simple conversion - không perfect như HTML gốc
+        return pageData.elements.map(element => this.elementToHTML(element)).join('\n');
+    }
+
+    /**
+     * Convert element to HTML (simple version for fallback)
+     */
+    elementToHTML(element) {
+        if (!element.visible && element.visible !== undefined) {
+            return '';
+        }
+
+        const text = element.componentData?.text || '';
+
+        switch (element.type) {
+            case 'heading':
+                const level = element.componentData?.level || 1;
+                return `<h${level}>${text}</h${level}>`;
+            case 'paragraph':
+                return `<p>${text}</p>`;
+            case 'button':
+                return `<button>${text}</button>`;
+            case 'image':
+                const src = element.componentData?.src || '';
+                return `<img src="${src}" alt="${element.componentData?.alt || ''}" />`;
+            case 'section':
+                let childrenHTML = '';
+                if (element.children && element.children.length > 0) {
+                    childrenHTML = element.children.map(child => this.elementToHTML(child)).join('');
+                }
+                return `<div>${childrenHTML}</div>`;
+            default:
+                return `<div>${text}</div>`;
+        }
     }
 
     /**

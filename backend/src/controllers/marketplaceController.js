@@ -285,19 +285,40 @@ exports.sellPage = async (req, res) => {
             marketplaceId
         );
 
-        // Update page_data
+        // Update page_data with new image URLs
         const updatedPageData = s3CopyService.updatePageDataImages(page.page_data, imageMap);
 
-        // Generate screenshot
-        console.log('Generating screenshot...');
+        // Generate screenshot from HTML (not page_data)
+        console.log('Generating screenshot from S3 HTML...');
         let screenshotUrl = null;
         try {
-            screenshotUrl = await screenshotService.generateScreenshot(
-                updatedPageData,
-                marketplaceId
-            );
+            // Get S3 key from file_path
+            const getS3KeyFromFilePath = (file_path) => {
+                if (!file_path) return null;
+                const bucketName = process.env.AWS_S3_BUCKET;
+                let s3Key;
+                if (file_path.includes('landinghub-iconic')) {
+                    s3Key = file_path.split('s3://landinghub-iconic/')[1];
+                } else {
+                    s3Key = file_path.split(`s3://${bucketName}/`)[1];
+                }
+                return s3Key.endsWith('index.html') ? s3Key : `${s3Key}/index.html`;
+            };
+
+            if (page.file_path) {
+                const s3Key = getS3KeyFromFilePath(page.file_path);
+                console.log('Fetching HTML from S3:', s3Key);
+                screenshotUrl = await screenshotService.generateScreenshotFromS3(
+                    s3Key,
+                    marketplaceId
+                );
+                console.log('Screenshot generated successfully:', screenshotUrl);
+            } else {
+                console.warn('Page has no file_path, cannot generate screenshot from S3');
+            }
         } catch (screenshotError) {
             console.error('Screenshot generation failed:', screenshotError);
+            // Don't fail the entire request if screenshot fails
         }
 
         // Tạo marketplace page
@@ -341,7 +362,10 @@ exports.sellPage = async (req, res) => {
  */
 exports.updateMarketplacePage = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
+        }
         const { id } = req.params;
         const updates = req.body;
 
@@ -402,7 +426,10 @@ exports.updateMarketplacePage = async (req, res) => {
  */
 exports.deleteMarketplacePage = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
+        }
         const { id } = req.params;
 
         const marketplacePage = await MarketplacePage.findOne({
@@ -451,15 +478,29 @@ exports.deleteMarketplacePage = async (req, res) => {
  */
 exports.getMyMarketplacePages = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            console.error('User ID is undefined in getMyMarketplacePages');
+            return res.status(401).json({
+                success: false,
+                message: 'Không thể xác thực người dùng'
+            });
+        }
+
         const { status } = req.query;
         let query = { seller_id: userId };
         if (status) {
             query.status = status;
         }
+
+        console.log('Fetching marketplace pages for user:', userId, 'query:', query);
+
         const pages = await MarketplacePage.find(query)
             .populate('page_id')
             .sort({ created_at: -1 });
+
+        console.log(`Found ${pages.length} marketplace pages for user ${userId}`);
+
         res.json({ success: true, data: pages });
     } catch (error) {
         console.error('Get My Marketplace Pages Error:', error);
@@ -472,7 +513,10 @@ exports.getMyMarketplacePages = async (req, res) => {
  */
 exports.toggleLike = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
+        }
         const { id } = req.params;
 
         const marketplacePage = await MarketplacePage.findById(id);
@@ -509,7 +553,10 @@ exports.toggleLike = async (req, res) => {
  */
 exports.getSellerStats = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
+        }
 
         // Đếm số marketplace pages
         const totalPages = await MarketplacePage.countDocuments({ seller_id: userId });
@@ -557,10 +604,13 @@ exports.getSellerStats = async (req, res) => {
  */
 exports.downloadAsHTML = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
+        }
         const { id } = req.params;
 
-        const marketplacePage = await MarketplacePage.findById(id);
+        const marketplacePage = await MarketplacePage.findById(id).populate('page_id');
 
         if (!marketplacePage) {
             return res.status(404).json({
@@ -586,8 +636,21 @@ exports.downloadAsHTML = async (req, res) => {
             });
         }
 
-        // Generate ZIP file
-        const zipPath = await exportService.exportAsHTMLZip(marketplacePage, marketplacePage.page_data);
+        // Lấy page gốc để lấy HTML từ S3
+        const originalPage = marketplacePage.page_id;
+        if (!originalPage || !originalPage.file_path) {
+            return res.status(400).json({
+                success: false,
+                message: 'Landing page không có HTML content'
+            });
+        }
+
+        // Generate ZIP file với HTML từ S3
+        const zipPath = await exportService.exportAsHTMLZip(
+            marketplacePage,
+            marketplacePage.page_data,
+            originalPage.file_path  // Pass S3 path
+        );
 
         // Send file
         res.download(zipPath, `${marketplacePage.title}.zip`, (err) => {
@@ -613,10 +676,13 @@ exports.downloadAsHTML = async (req, res) => {
  */
 exports.downloadAsIUHPage = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
+        }
         const { id } = req.params;
 
-        const marketplacePage = await MarketplacePage.findById(id);
+        const marketplacePage = await MarketplacePage.findById(id).populate('page_id');
 
         if (!marketplacePage) {
             return res.status(404).json({
@@ -642,8 +708,21 @@ exports.downloadAsIUHPage = async (req, res) => {
             });
         }
 
-        // Generate .iuhpage file
-        const filePath = await exportService.exportAsIUHPage(marketplacePage, marketplacePage.page_data);
+        // Lấy page gốc để lấy HTML từ S3
+        const originalPage = marketplacePage.page_id;
+        if (!originalPage || !originalPage.file_path) {
+            return res.status(400).json({
+                success: false,
+                message: 'Landing page không có HTML content'
+            });
+        }
+
+        // Generate .iuhpage file với HTML từ S3
+        const filePath = await exportService.exportAsIUHPage(
+            marketplacePage,
+            marketplacePage.page_data,
+            originalPage.file_path  // Pass S3 path
+        );
 
         // Send file
         res.download(filePath, `${marketplacePage.title}.iuhpage`, (err) => {

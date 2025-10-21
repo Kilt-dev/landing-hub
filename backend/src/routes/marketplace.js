@@ -4,27 +4,20 @@ const auth = require('../middleware/auth');
 const marketplaceController = require('../controllers/marketplaceController');
 
 /**
- * Public routes - không cần authentication
+ * Protected routes - yêu cầu authentication (phải đặt trước dynamic routes)
  */
 
-// Lấy danh sách marketplace pages
-router.get('/', marketplaceController.getMarketplacePages);
+// Lấy marketplace pages của user
+router.get('/my/pages', auth, marketplaceController.getMyMarketplacePages);
 
-// Lấy chi tiết marketplace page
-router.get('/:id', marketplaceController.getMarketplacePageDetail);
+// Lấy thống kê seller
+router.get('/seller/stats', auth, marketplaceController.getSellerStats);
 
-// Lấy featured pages
-router.get('/featured/list', marketplaceController.getFeaturedPages);
+// Download marketplace page as HTML ZIP
+router.get('/:id/download/html', auth, marketplaceController.downloadAsHTML);
 
-// Lấy bestsellers
-router.get('/bestsellers/list', marketplaceController.getBestsellers);
-
-// Lấy new arrivals
-router.get('/new-arrivals/list', marketplaceController.getNewArrivals);
-
-/**
- * Protected routes - yêu cầu authentication
- */
+// Download marketplace page as .iuhpage
+router.get('/:id/download/iuhpage', auth, marketplaceController.downloadAsIUHPage);
 
 // Đăng bán landing page
 router.post('/sell', auth, marketplaceController.sellPage);
@@ -35,19 +28,26 @@ router.put('/:id', auth, marketplaceController.updateMarketplacePage);
 // Xóa marketplace page
 router.delete('/:id', auth, marketplaceController.deleteMarketplacePage);
 
-// Lấy marketplace pages của user
-router.get('/my/pages', auth, marketplaceController.getMyMarketplacePages);
-
 // Like/Unlike marketplace page
 router.post('/:id/like', auth, marketplaceController.toggleLike);
 
-// Lấy thống kê seller
-router.get('/seller/stats', auth, marketplaceController.getSellerStats);
+/**
+ * Public routes - không cần authentication
+ */
 
-// Download marketplace page as HTML ZIP
-router.get('/:id/download/html', auth, marketplaceController.downloadAsHTML);
+// Lấy featured pages (phải đặt trước /:id)
+router.get('/featured/list', marketplaceController.getFeaturedPages);
 
-// Download marketplace page as .iuhpage
-router.get('/:id/download/iuhpage', auth, marketplaceController.downloadAsIUHPage);
+// Lấy bestsellers (phải đặt trước /:id)
+router.get('/bestsellers/list', marketplaceController.getBestsellers);
+
+// Lấy new arrivals (phải đặt trước /:id)
+router.get('/new-arrivals/list', marketplaceController.getNewArrivals);
+
+// Lấy danh sách marketplace pages
+router.get('/', marketplaceController.getMarketplacePages);
+
+// Lấy chi tiết marketplace page (phải đặt cuối cùng)
+router.get('/:id', marketplaceController.getMarketplacePageDetail);
 
 module.exports = router;

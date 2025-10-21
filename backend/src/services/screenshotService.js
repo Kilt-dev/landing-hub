@@ -1,16 +1,25 @@
 const puppeteer = require('puppeteer');
 const s3CopyService = require('./s3CopyService');
+const AWS = require('aws-sdk');
+
+const s3 = new AWS.S3();
 
 class ScreenshotService {
     /**
-     * Generate screenshot from page_data
+     * Generate screenshot from HTML content (NOT page_data)
+     * This should receive actual HTML from S3, not page_data object
      */
-    async generateScreenshot(pageData, marketplacePageId) {
+    async generateScreenshot(htmlContent, marketplacePageId, retries = 3) {
         let browser = null;
+        let page = null;
 
         try {
-            // Convert page_data to HTML
-            const html = this.pageDataToHTML(pageData);
+            console.log(`Generating screenshot for marketplace page ${marketplacePageId} (attempt ${4 - retries}/3)`);
+
+            // Validate input - should be HTML string, not object
+            if (typeof htmlContent !== 'string') {
+                throw new Error('htmlContent must be a string (HTML), not an object. Use HTML from S3, not page_data.');
+            }
 
             // Launch puppeteer
             browser = await puppeteer.launch({
@@ -18,173 +27,117 @@ class ScreenshotService {
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage'
+                    '--disable-dev-shm-usage',
+                    '--disable-web-security'
                 ]
             });
 
-            const page = await browser.newPage();
+            page = await browser.newPage();
 
-            // Set viewport
+            // Set viewport for better screenshot quality
             await page.setViewport({
-                width: 1200,
-                height: 800,
-                deviceScaleFactor: 2
+                width: 1280,
+                height: 1024,
+                deviceScaleFactor: 1
             });
 
-            // Set content
-            await page.setContent(html, {
-                waitUntil: ['networkidle0', 'load'],
-                timeout: 30000
+            // Block unnecessary resources to speed up loading
+            await page.setRequestInterception(true);
+            page.on('request', (request) => {
+                const resourceType = request.resourceType();
+                // Block fonts and videos to speed up
+                if (['font', 'media'].includes(resourceType)) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
             });
 
-            // Wait a bit for images to load
-            await page.waitForTimeout(2000);
+            // Set content with better wait strategy
+            await page.setContent(htmlContent, {
+                waitUntil: ['load', 'networkidle2'], // networkidle2 is less strict than networkidle0
+                timeout: 45000 // Increased timeout
+            });
+
+            // Wait for all images to load
+            await page.evaluate(() => {
+                return Promise.all(
+                    Array.from(document.images)
+                        .filter(img => !img.complete)
+                        .map(img => new Promise((resolve) => {
+                            img.onload = img.onerror = resolve;
+                        }))
+                );
+            });
+
+            // Additional wait for rendering
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
             // Get full page height
             const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
+            console.log(`Page height: ${bodyHeight}px`);
 
-            // Take screenshot
+            // Take FULL PAGE screenshot (like templates)
             const screenshot = await page.screenshot({
-                fullPage: true,
+                fullPage: true, // Capture entire page
                 type: 'png',
                 omitBackground: false
             });
 
             await browser.close();
+            browser = null;
 
             // Upload to S3
             const screenshotUrl = await s3CopyService.uploadScreenshot(screenshot, marketplacePageId);
+            console.log(`Screenshot generated successfully: ${screenshotUrl}`);
 
             return screenshotUrl;
         } catch (error) {
-            if (browser) {
-                await browser.close();
+            console.error(`Screenshot generation error (attempt ${4 - retries}/3):`, error.message);
+
+            // Clean up
+            if (page && !page.isClosed()) {
+                await page.close().catch(e => console.error('Error closing page:', e));
             }
-            console.error('Screenshot generation error:', error);
+            if (browser) {
+                await browser.close().catch(e => console.error('Error closing browser:', e));
+            }
+
+            // Retry logic
+            if (retries > 0) {
+                console.log(`Retrying screenshot generation for ${marketplacePageId}...`);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retry
+                return this.generateScreenshot(htmlContent, marketplacePageId, retries - 1);
+            }
+
+            // If all retries failed, throw error
             throw error;
         }
     }
 
     /**
-     * Convert page_data to HTML
+     * Generate screenshot from S3 HTML file
+     * This is the recommended method for marketplace pages
      */
-    pageDataToHTML(pageData) {
-        if (!pageData || !pageData.elements) {
-            return '<html><body><h1>Empty Page</h1></body></html>';
-        }
+    async generateScreenshotFromS3(s3Key, marketplacePageId) {
+        try {
+            console.log(`Fetching HTML from S3: ${s3Key}`);
 
-        const { canvas = {}, elements = [] } = pageData;
-        const backgroundColor = canvas.background || '#ffffff';
+            const s3Response = await s3.getObject({
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: s3Key
+            }).promise();
 
-        let htmlContent = '';
+            const htmlContent = s3Response.Body.toString('utf-8');
+            console.log(`HTML fetched successfully, length: ${htmlContent.length} bytes`);
 
-        // Convert elements to HTML
-        elements.forEach(element => {
-            htmlContent += this.elementToHTML(element);
-        });
-
-        return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page Preview</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: ${backgroundColor};
-            min-height: 100vh;
-        }
-        .page-container {
-            width: 100%;
-            max-width: ${canvas.width || 1200}px;
-            margin: 0 auto;
-            position: relative;
-        }
-    </style>
-</head>
-<body>
-    <div class="page-container">
-        ${htmlContent}
-    </div>
-</body>
-</html>
-        `;
-    }
-
-    /**
-     * Convert single element to HTML
-     */
-    elementToHTML(element) {
-        if (!element.visible && element.visible !== undefined) {
-            return '';
-        }
-
-        const styles = this.stylesToCSS(element.styles || {});
-        const position = element.position?.desktop || {};
-
-        let positionStyles = '';
-        if (position.x !== undefined || position.y !== undefined) {
-            positionStyles = `position: absolute; left: ${position.x || 0}px; top: ${position.y || 0}px;`;
-        }
-
-        const size = element.size || {};
-        const sizeStyles = `width: ${size.width || 'auto'}; height: ${size.height || 'auto'};`;
-
-        const allStyles = `${positionStyles} ${sizeStyles} ${styles}`;
-
-        switch (element.type) {
-            case 'heading':
-                const level = element.componentData?.level || 1;
-                return `<h${level} style="${allStyles}">${element.componentData?.text || ''}</h${level}>`;
-
-            case 'paragraph':
-                return `<p style="${allStyles}">${element.componentData?.text || ''}</p>`;
-
-            case 'button':
-                return `<button style="${allStyles}">${element.componentData?.text || 'Button'}</button>`;
-
-            case 'image':
-                const src = element.componentData?.src || '';
-                const alt = element.componentData?.alt || '';
-                return `<img src="${src}" alt="${alt}" style="${allStyles}" />`;
-
-            case 'section':
-                let childrenHTML = '';
-                if (element.children && element.children.length > 0) {
-                    childrenHTML = element.children.map(child => this.elementToHTML(child)).join('');
-                }
-                return `<div style="${allStyles}">${childrenHTML}</div>`;
-
-            case 'form':
-                return `<form style="${allStyles}">
-                    <input type="email" placeholder="Email" style="width: 100%; padding: 10px; margin-bottom: 10px;" />
-                    <button type="submit" style="width: 100%; padding: 10px;">Submit</button>
-                </form>`;
-
-            default:
-                return `<div style="${allStyles}">${element.componentData?.text || ''}</div>`;
+            return await this.generateScreenshot(htmlContent, marketplacePageId);
+        } catch (error) {
+            console.error('Failed to generate screenshot from S3:', error.message);
+            throw error;
         }
     }
 
-    /**
-     * Convert styles object to CSS string
-     */
-    stylesToCSS(styles) {
-        return Object.entries(styles)
-            .map(([key, value]) => {
-                // Convert camelCase to kebab-case
-                const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-                return `${cssKey}: ${value};`;
-            })
-            .join(' ');
-    }
 }
 
 module.exports = new ScreenshotService();

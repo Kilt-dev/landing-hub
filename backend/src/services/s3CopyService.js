@@ -2,11 +2,9 @@ const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const { v4: uuidv4 } = require('uuid');
 
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION
-});
+// Cấu hình AWS - đồng nhất với pages.js
+AWS.config.update({ region: process.env.AWS_REGION || 'us-east-1' });
+const s3 = new AWS.S3();
 
 class S3CopyService {
     constructor() {
@@ -81,7 +79,7 @@ class S3CopyService {
     }
 
     /**
-     * Copy single image to marketplace folder
+     * Copy single image to marketplace folder - đồng nhất với pages.js
      */
     async copyImageToMarketplace(imageUrl, marketplacePageId) {
         try {
@@ -97,17 +95,22 @@ class S3CopyService {
             // Generate new key
             const extension = oldKey.split('.').pop();
             const newKey = `marketplace/${marketplacePageId}/images/${uuidv4()}.${extension}`;
+            const region = process.env.AWS_REGION || 'us-east-1';
 
-            // Copy object in S3
+            // Copy object in S3 with cache control
             await s3.copyObject({
                 Bucket: this.bucket,
                 CopySource: `${this.bucket}/${oldKey}`,
                 Key: newKey,
-                ACL: 'public-read'
+                ACL: 'public-read',
+                CacheControl: 'public, max-age=31536000',
+                MetadataDirective: 'REPLACE'
             }).promise();
 
+            console.log(`Image copied successfully: ${oldKey} -> ${newKey}`);
+
             // Return new URL
-            return `https://${this.bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey}`;
+            return `https://${this.bucket}.s3.${region}.amazonaws.com/${newKey}`;
         } catch (error) {
             console.error('Copy single image error:', error);
             return imageUrl; // Return original if copy fails
@@ -164,21 +167,26 @@ class S3CopyService {
     }
 
     /**
-     * Upload screenshot to S3
+     * Upload screenshot to S3 - đồng nhất với pages.js
      */
     async uploadScreenshot(buffer, marketplacePageId) {
         try {
             const key = `marketplace/${marketplacePageId}/screenshot.png`;
+            const region = process.env.AWS_REGION || 'us-east-1';
 
-            await s3.putObject({
+            const params = {
                 Bucket: this.bucket,
                 Key: key,
                 Body: buffer,
                 ContentType: 'image/png',
-                ACL: 'public-read'
-            }).promise();
+                ACL: 'public-read',
+                CacheControl: 'public, max-age=31536000'
+            };
 
-            return `https://${this.bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+            const result = await s3.upload(params).promise();
+            console.log(`Screenshot uploaded successfully: ${key}`);
+
+            return `https://${this.bucket}.s3.${region}.amazonaws.com/${key}`;
         } catch (error) {
             console.error('Upload screenshot error:', error);
             throw error;
