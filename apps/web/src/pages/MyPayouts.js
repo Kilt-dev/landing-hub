@@ -123,7 +123,7 @@ const MyPayouts = () => {
 
         const info = statusMap[status] || statusMap.PENDING;
         return (
-            <span className="status-badge" style={{ backgroundColor: info.color }}>
+            <span className="status-badge2" style={{ backgroundColor: info.color }}>
                 {info.label}
             </span>
         );

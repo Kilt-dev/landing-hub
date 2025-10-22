@@ -17,7 +17,7 @@
     --color-success: #10b981;
     --color-warning: #f59e0b;
     --color-danger: #ef4444;
-    --color-info: #3b82f6;
+    --color-info: rgba(141, 118, 183, 0.94);
 
     /* Typography */
     --font-serif: "Georgia", "Garamond", serif;

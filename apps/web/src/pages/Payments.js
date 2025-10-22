@@ -203,7 +203,7 @@ const Payments = () => {
         const statusInfo = statusOptions.find(s => s.value === status) || statusOptions[0];
         return (
             <span
-                className="status-badge"
+                className="status-badge1"
                 style={{
                     backgroundColor: statusInfo.color || '#6b7280',
                     color: 'white'

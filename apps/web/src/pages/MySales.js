@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useContext} from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { UserContext } from '../context/UserContext';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
@@ -11,13 +11,7 @@ import 'aos/dist/aos.css';
 import '../styles/MySales.css';
 import DogLoader from '../components/Loader';
 
-// [CẬP NHẬT] Thay thế Lucide icons bằng các component/hàm icon tinh tế hơn
-// Giả định bạn có các component/hàm này. Ví dụ: IconView, IconDelete.
-// Dùng hàm để dễ dàng áp dụng className và size.
-
 const IconLuxury = ({ name, size = 18, color = 'currentColor', className = '' }) => {
-    // Trong thực tế, bạn sẽ import SVG hoặc dùng thư viện cao cấp (ví dụ: Heroicons, Remixicon với style tinh chỉnh)
-    // Ở đây, tôi dùng SVG placeholder để CSS có thể áp dụng.
     const icons = {
         View: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
         Trash: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
@@ -30,7 +24,6 @@ const IconLuxury = ({ name, size = 18, color = 'currentColor', className = '' })
 
     return <i className={className}>{icons[name] || null}</i>;
 };
-
 
 const MySales = () => {
     const { user } = useContext(UserContext);
@@ -53,13 +46,12 @@ const MySales = () => {
         { value: 'SOLD_OUT', label: 'Hết hàng' }
     ];
 
-    // [CẬP NHẬT] Các Icon Stats cao cấp hơn
     const statIcons = {
-        totalPages: { name: 'Box', color: '#B8860B' }, // Vàng Kim
-        activePages: { name: 'Check', color: '#27AE60' }, // Xanh Lá
-        pendingPages: { name: 'Clock', color: '#E6B01F' }, // Vàng Cảnh Báo
-        revenue: { name: 'Dollar', color: '#B8860B' }, // Vàng Kim
-        totalSales: { name: 'ShoppingBag', color: '#192A56' }, // Xanh Navy
+        totalPages: { name: 'Box', color: '#B8860B' },
+        activePages: { name: 'Check', color: '#27AE60' },
+        pendingPages: { name: 'Clock', color: '#E6B01F' },
+        revenue: { name: 'Dollar', color: '#B8860B' },
+        totalSales: { name: 'ShoppingBag', color: '#192A56' },
     };
 
     const fetchMyPages = useCallback(async () => {
@@ -70,7 +62,6 @@ const MySales = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 params: { status: selectedStatus !== 'all' ? selectedStatus : undefined }
             });
-            console.log('MySales pages response:', response.data);
             if (Array.isArray(response.data.data)) {
                 setPages(response.data.data);
             } else {
@@ -93,7 +84,6 @@ const MySales = () => {
             const response = await axios.get(`${API_BASE_URL}/api/marketplace/seller/stats`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-            console.log('Stats response:', response.data);
             if (response.data.data) {
                 setStats(response.data.data);
             }
@@ -186,7 +176,6 @@ const MySales = () => {
         return <DogLoader />;
     }
 
-    // Tạo danh sách Stats để render dễ dàng hơn
     const statsList = stats ? [
         { key: 'totalPages', label: 'Tổng landing page', value: stats.totalPages, icon: statIcons.totalPages },
         { key: 'activePages', label: 'Đang bán', value: stats.activePages, icon: statIcons.activePages },
@@ -200,7 +189,6 @@ const MySales = () => {
             <Header />
             <div className="my-sales-main">
                 <Sidebar userRole={userRole} />
-
                 <div className="my-sales-content">
                     <div className="my-sales-header" data-aos="fade-down">
                         <div>
@@ -216,7 +204,6 @@ const MySales = () => {
                         <div className="stats-grid" data-aos="fade-up">
                             {statsList.map((stat) => (
                                 <div key={stat.key} className="stat-card">
-                                    {/* Sử dụng IconLuxury mới */}
                                     <div className="stat-icon-wrapper">
                                         <IconLuxury
                                             name={stat.icon.name}
@@ -226,9 +213,7 @@ const MySales = () => {
                                         />
                                     </div>
                                     <div className="stat-info">
-                                        <div
-                                            className={`stat-value ${stat.isCurrency ? 'value-gold' : ''}`}
-                                        >
+                                        <div className={`stat-value ${stat.isCurrency ? 'value-gold' : ''}`}>
                                             {stat.value}
                                         </div>
                                         <div className="stat-label">{stat.label}</div>
@@ -252,7 +237,7 @@ const MySales = () => {
                         </select>
                     </div>
 
-                    <div className="pages-list" data-aos="fade-up">
+                    <div className="pages-list1" data-aos="fade-up">
                         {pages.length === 0 ? (
                             <div className="empty-state">
                                 <p>Chưa có landing page nào được đăng bán trên Marketplace</p>
@@ -264,57 +249,63 @@ const MySales = () => {
                             pages.map(page => (
                                 <div key={page._id} className="page-item">
                                     <div className="page-image">
-                                        <img src={page.main_screenshot || '/placeholder.png'} alt={page.title} />
+                                        <img
+                                            loading="lazy"
+                                            src={page.main_screenshot || 'https://via.placeholder.com/300x200?text=Preview'}
+                                            alt={page.title}
+                                        />
+                                        <div className="image-placeholder">No Image</div>
+                                        <div className="page-overlay">
+                                            <div className="action-buttons1">
+                                                <button
+                                                    className="btn-view1"
+                                                    onClick={() => navigate(`/marketplace/${page._id}`)}
+                                                >
+                                                    <IconLuxury name="View" size={16} color="white" />
+                                                </button>
+                                                <button
+                                                    className="btn-delete"
+                                                    onClick={() => handleDelete(page._id)}
+                                                >
+                                                    <IconLuxury name="Trash" size={16} color="#ef4444" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="page-info">
                                         <div className="page-header">
-                                            <h3>{page.title}</h3>
+                                            <h3 title={page.title}>{page.title}</h3>
                                             {getStatusBadge(page.status)}
                                         </div>
                                         <p className="page-category">{page.category}</p>
                                         <p className="page-description">
-                                            {page.description?.substring(0, 150) || 'Không có mô tả'}...
+                                            {page.description?.substring(0, 80) || 'Không có mô tả'}...
                                         </p>
-                                        <div className="page-meta">
-                                            {/* [CẬP NHẬT] Thay thế emoji bằng icon SVG */}
+                                        <div className="page-meta1">
+                        <span>
+                            <IconLuxury name="View" size={12} color="#7F8C8D" /> {page.views} lượt xem
+                        </span>
                                             <span>
-                                                <IconLuxury name="View" size={14} color="#7F8C8D" /> {page.views} lượt xem
-                                            </span>
-                                            {/* Giả định có các trường likes, sold_count */}
+                            <IconLuxury name="Check" size={12} color="#7F8C8D" /> {page.likes} thích
+                        </span>
                                             <span>
-                                                <IconLuxury name="Check" size={14} color="#7F8C8D" /> {page.likes} thích
-                                            </span>
-                                            <span>
-                                                <IconLuxury name="ShoppingBag" size={14} color="#7F8C8D" /> {page.sold_count} đã bán
-                                            </span>
+                            <IconLuxury name="ShoppingBag" size={12} color="#7F8C8D" /> {page.sold_count} đã bán
+                        </span>
                                         </div>
                                         {page.rejection_reason && (
-                                            <div className="rejection-reason">
+                                            <div className="rejection-reason" title={page.rejection_reason}>
                                                 <strong>Lý do từ chối:</strong> {page.rejection_reason}
                                             </div>
                                         )}
                                     </div>
                                     <div className="page-actions">
                                         <div className="page-price">{formatPrice(page.price)}</div>
-                                        <div className="action-buttons">
-                                            <button
-                                                className="btn-view"
-                                                onClick={() => navigate(`/marketplace/${page._id}`)}
-                                            >
-                                                <IconLuxury name="View" size={16} color="white" /> Xem
-                                            </button>
-                                            <button
-                                                className="btn-delete"
-                                                onClick={() => handleDelete(page._id)}
-                                            >
-                                                <IconLuxury name="Trash" size={16} color="#C0392B" /> Xóa
-                                            </button>
-                                        </div>
                                     </div>
                                 </div>
                             ))
                         )}
                     </div>
+
                 </div>
             </div>
         </div>
