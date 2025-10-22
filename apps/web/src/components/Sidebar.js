@@ -61,6 +61,11 @@ const Sidebar = ({ role }) => {
                 <svg className="sidebar-svg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
+            )},
+        { name: 'Lịch sử rút tiền', path: '/my-payouts', icon: (
+                <svg className="sidebar-svg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
             )}
     ];
 
@@ -83,6 +88,11 @@ const Sidebar = ({ role }) => {
         { name: 'Kiểm tra Thanh toán', path: '/payments', icon: (
                 <svg className="sidebar-svg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+            )},
+        { name: 'Quản lý rút tiền', path: '/admin/payouts', icon: (
+                <svg className="sidebar-svg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
             )},
         { name: 'Template Inconic', path: '/qltemplates', icon: (
@@ -157,6 +167,18 @@ const Sidebar = ({ role }) => {
                     );
                 })}
             </nav>
+
+            {/* Footer */}
+            {!isCompact && (
+                <div className="sidebar-footer">
+                    <div className="sidebar-status">
+                        <div className="sidebar-status-icon">
+                            <div className="sidebar-status-dot"></div>
+                        </div>
+                        <span className="sidebar-status-text">System Online</span>
+                    </div>
+                </div>
+            )}
         </aside>
     );
 };

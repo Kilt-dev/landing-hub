@@ -129,7 +129,6 @@ const MarketplacePageSchema = new mongoose.Schema({
         default: 0,
         min: 0
     },
-    // Đánh giá trung bình
     rating: {
         type: Number,
         default: 0,

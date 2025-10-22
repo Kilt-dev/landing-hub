@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { UserContext } from '../context/UserContext';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import PayoutRequest from '../components/PayoutRequest';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -28,6 +29,7 @@ const Payments = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showPayoutModal, setShowPayoutModal] = useState(false);
     const navigate = useNavigate();
     const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -217,6 +219,21 @@ const Payments = () => {
         return methodInfo?.icon || '💳';
     };
 
+    const getTransactionType = (txn) => {
+        if (!user || userRole === 'admin') return null;
+
+        const currentUserId = user?.id || user?.userId || user?._id;
+        const buyerId = txn.buyer_id?._id || txn.buyer_id;
+        const sellerId = txn.seller_id?._id || txn.seller_id;
+
+        if (buyerId?.toString() === currentUserId?.toString()) {
+            return { type: 'buy', label: '🛒 Đã mua', color: '#3b82f6' };
+        } else if (sellerId?.toString() === currentUserId?.toString()) {
+            return { type: 'sell', label: '💰 Đã bán', color: '#10b981' };
+        }
+        return { type: 'unknown', label: 'N/A', color: '#6b7280' };
+    };
+
     const handleViewDetail = (transaction) => {
         setSelectedTransaction(transaction);
         setShowDetailModal(true);
@@ -228,10 +245,9 @@ const Payments = () => {
 
     return (
         <div className="payments-container">
-            <Header />
+            <Sidebar role={userRole} />
             <div className="payments-main">
-                <Sidebar role={userRole} />
-
+                <Header />
                 <div className="payments-content">
                     {/* Header */}
                     <div className="payments-header" data-aos="fade-down">
@@ -244,44 +260,98 @@ const Payments = () => {
                     {/* Stats Grid */}
                     {stats && (
                         <div className="stats-grid" data-aos="fade-up">
-                            <div className="stat-card">
-                                <div className="stat-icon" style={{ background: '#e0f2fe' }}>
-                                    <DollarSign size={28} color="#0284c7" />
-                                </div>
-                                <div className="stat-info">
-                                    <div className="stat-value">{formatPrice(stats.totalRevenue || 0)}</div>
-                                    <div className="stat-label">
-                                        {userRole === 'admin' ? 'Tổng doanh thu' : 'Tổng chi tiêu'}
+                            {userRole === 'admin' ? (
+                                <>
+                                    <div className="stat-card">
+                                        <div className="stat-icon" style={{ background: '#e0f2fe' }}>
+                                            <DollarSign size={28} color="#0284c7" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{formatPrice(stats.totalRevenue || 0)}</div>
+                                            <div className="stat-label">Tổng doanh thu</div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-icon" style={{ background: '#dcfce7' }}>
-                                    <CheckCircle size={28} color="#16a34a" />
-                                </div>
-                                <div className="stat-info">
-                                    <div className="stat-value">{stats.completedCount || 0}</div>
-                                    <div className="stat-label">Thành công</div>
-                                </div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-icon" style={{ background: '#fef3c7' }}>
-                                    <Clock size={28} color="#d97706" />
-                                </div>
-                                <div className="stat-info">
-                                    <div className="stat-value">{stats.pendingCount || 0}</div>
-                                    <div className="stat-label">Chờ xử lý</div>
-                                </div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-icon" style={{ background: '#fee2e2' }}>
-                                    <XCircle size={28} color="#dc2626" />
-                                </div>
-                                <div className="stat-info">
-                                    <div className="stat-value">{stats.failedCount || 0}</div>
-                                    <div className="stat-label">Thất bại</div>
-                                </div>
-                            </div>
+                                    <div className="stat-card">
+                                        <div className="stat-icon" style={{ background: '#f3e8ff' }}>
+                                            <TrendingUp size={28} color="#9333ea" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{formatPrice(stats.totalPlatformFee || 0)}</div>
+                                            <div className="stat-label">Phí platform</div>
+                                        </div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-icon" style={{ background: '#dcfce7' }}>
+                                            <CheckCircle size={28} color="#16a34a" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{stats.completedCount || 0}</div>
+                                            <div className="stat-label">Thành công</div>
+                                        </div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-icon" style={{ background: '#fef3c7' }}>
+                                            <Clock size={28} color="#d97706" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{stats.pendingCount || 0}</div>
+                                            <div className="stat-label">Chờ xử lý</div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="stat-card">
+                                        <div className="stat-icon" style={{ background: '#e0f2fe' }}>
+                                            <DollarSign size={28} color="#0284c7" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{formatPrice(stats.totalRevenue || 0)}</div>
+                                            <div className="stat-label">Doanh thu bán hàng</div>
+                                            <div className="stat-sublabel">{stats.salesCount || 0} lượt bán</div>
+                                        </div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-icon" style={{ background: '#dcfce7' }}>
+                                            <CheckCircle size={28} color="#16a34a" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{formatPrice(stats.totalEarned || 0)}</div>
+                                            <div className="stat-label">Thu nhập thực</div>
+                                            <div className="stat-sublabel">Sau trừ phí 10%</div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        className="stat-card highlight-card"
+                                        onClick={() => {
+                                            if (stats.pendingPayout > 0) {
+                                                setShowPayoutModal(true);
+                                            } else {
+                                                toast.info('Bạn chưa có tiền để rút');
+                                            }
+                                        }}
+                                    >
+                                        <div className="stat-icon" style={{ background: '#fef3c7' }}>
+                                            <Clock size={28} color="#d97706" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{formatPrice(stats.pendingPayout || 0)}</div>
+                                            <div className="stat-label">Chờ rút tiền</div>
+                                            <div className="stat-sublabel">Click để yêu cầu rút</div>
+                                        </div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-icon" style={{ background: '#d1fae5' }}>
+                                            <TrendingUp size={28} color="#059669" />
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{formatPrice(stats.completedPayout || 0)}</div>
+                                            <div className="stat-label">Đã nhận</div>
+                                            <div className="stat-sublabel">Đã chuyển khoản</div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -351,6 +421,7 @@ const Payments = () => {
                                     <thead>
                                     <tr>
                                         <th>ID</th>
+                                        {userRole !== 'admin' && <th>Loại</th>}
                                         <th>Ngày</th>
                                         <th>Sản phẩm</th>
                                         {userRole === 'admin' && <th>Người mua</th>}
@@ -362,48 +433,68 @@ const Payments = () => {
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {transactions.map((txn) => (
-                                        <tr key={txn._id}>
-                                            <td>
-                                                <code className="transaction-id">
-                                                    {txn._id.substring(0, 8)}...
-                                                </code>
-                                            </td>
-                                            <td>{formatDate(txn.created_at)}</td>
-                                            <td>
-                                                <div className="product-info">
-                                                    <strong>{txn.marketplace_page_id?.title || 'N/A'}</strong>
-                                                </div>
-                                            </td>
-                                            {userRole === 'admin' && (
+                                    {transactions.map((txn) => {
+                                        const txnType = getTransactionType(txn);
+                                        return (
+                                            <tr key={txn._id}>
                                                 <td>
-                                                    {txn.buyer_id?.name || txn.buyer_id?.email || 'N/A'}
+                                                    <code className="transaction-id">
+                                                        {txn._id.substring(0, 8)}...
+                                                    </code>
                                                 </td>
-                                            )}
-                                            {userRole === 'admin' && (
+                                                {userRole !== 'admin' && txnType && (
+                                                    <td>
+                                                    <span
+                                                        className="transaction-type-badge"
+                                                        style={{
+                                                            backgroundColor: txnType.color,
+                                                            color: 'white',
+                                                            padding: '4px 8px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '600'
+                                                        }}
+                                                    >
+                                                        {txnType.label}
+                                                    </span>
+                                                    </td>
+                                                )}
+                                                <td>{formatDate(txn.created_at)}</td>
                                                 <td>
-                                                    {txn.seller_id?.name || txn.seller_id?.email || 'N/A'}
+                                                    <div className="product-info">
+                                                        <strong>{txn.marketplace_page_id?.title || 'N/A'}</strong>
+                                                    </div>
                                                 </td>
-                                            )}
-                                            <td>
+                                                {userRole === 'admin' && (
+                                                    <td>
+                                                        {txn.buyer_id?.name || txn.buyer_id?.email || 'N/A'}
+                                                    </td>
+                                                )}
+                                                {userRole === 'admin' && (
+                                                    <td>
+                                                        {txn.seller_id?.name || txn.seller_id?.email || 'N/A'}
+                                                    </td>
+                                                )}
+                                                <td>
                                                     <span className="payment-method">
                                                         {getPaymentMethodIcon(txn.payment_method)} {txn.payment_method}
                                                     </span>
-                                            </td>
-                                            <td>
-                                                <strong className="amount">{formatPrice(txn.amount)}</strong>
-                                            </td>
-                                            <td>{getStatusBadge(txn.status)}</td>
-                                            <td>
-                                                <button
-                                                    className="view-detail-btn"
-                                                    onClick={() => handleViewDetail(txn)}
-                                                >
-                                                    <Eye size={16} /> Chi tiết
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                                <td>
+                                                    <strong className="amount">{formatPrice(txn.amount)}</strong>
+                                                </td>
+                                                <td>{getStatusBadge(txn.status)}</td>
+                                                <td>
+                                                    <button
+                                                        className="view-detail-btn"
+                                                        onClick={() => handleViewDetail(txn)}
+                                                    >
+                                                        <Eye size={16} /> Chi tiết
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                     </tbody>
                                 </table>
 
@@ -482,6 +573,17 @@ const Payments = () => {
                     </div>
                 </div>
             )}
+
+            {/* Payout Request Modal */}
+            <PayoutRequest
+                isOpen={showPayoutModal}
+                onClose={() => setShowPayoutModal(false)}
+                pendingAmount={stats?.pendingPayout || 0}
+                onSuccess={() => {
+                    loadStats();
+                    loadTransactions();
+                }}
+            />
         </div>
     );
 };

@@ -61,7 +61,62 @@ exports.createTransaction = async (req, res) => {
             });
         }
 
-        // ... rest of the function remains the same
+        // Tính toán phí
+        const amount = marketplacePage.price;
+        const platform_fee = paymentService.calculatePlatformFee(amount);
+        const seller_amount = paymentService.calculateSellerAmount(amount);
+
+        // Lấy IP address và user agent
+        const ip_address = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress;
+        const user_agent = req.headers['user-agent'];
+
+        // Tạo transaction
+        const transaction = new Transaction({
+            marketplace_page_id: marketplace_page_id,
+            buyer_id: userId,
+            seller_id: marketplacePage.seller_id._id,
+            amount: amount,
+            platform_fee: platform_fee,
+            seller_amount: seller_amount,
+            payment_method: payment_method,
+            status: 'PENDING',
+            ip_address: ip_address,
+            user_agent: user_agent,
+            metadata: {
+                page_title: marketplacePage.title,
+                page_category: marketplacePage.category
+            }
+        });
+
+        await transaction.save();
+
+        // Tạo payment URL
+        const paymentResult = await paymentService.createPayment(
+            transaction,
+            payment_method,
+            ip_address
+        );
+
+        if (!paymentResult.success) {
+            await transaction.markAsFailed(paymentResult.error);
+            return res.status(400).json({
+                success: false,
+                message: 'Không thể tạo thanh toán: ' + paymentResult.error
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Giao dịch đã được tạo',
+            data: {
+                transaction_id: transaction._id,
+                payment_url: paymentResult.paymentUrl || paymentResult.payUrl,
+                qr_code_url: paymentResult.qrCodeUrl,
+                deep_link: paymentResult.deeplink,
+                amount: amount,
+                expires_at: transaction.expires_at
+            }
+        });
     } catch (error) {
         console.error('Create Transaction Error:', error);
         res.status(500).json({
@@ -579,7 +634,7 @@ exports.getUserTransactions = async (req, res) => {
 exports.checkPurchase = async (req, res) => {
     try {
         const userId = req.user?.id;
-        const { pageId } = req.params;
+        const { marketplace_page_id } = req.params;
 
         if (!userId) {
             return res.status(401).json({
@@ -590,7 +645,7 @@ exports.checkPurchase = async (req, res) => {
 
         const transaction = await Transaction.findOne({
             buyer_id: userId,
-            marketplace_page_id: pageId,
+            marketplace_page_id: marketplace_page_id,
             status: 'COMPLETED'
         });
 
@@ -614,15 +669,50 @@ exports.getUserStats = async (req, res) => {
     try {
         const userId = req.user.id;
 
+        console.log('getUserStats userId:', userId);
+
+        // Convert to ObjectId for aggregation pipeline
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+
         // Tổng chi tiêu (as buyer)
         const totalSpent = await Transaction.aggregate([
-            { $match: { buyer_id: mongoose.Types.ObjectId(userId), status: 'COMPLETED' } },
+            { $match: { buyer_id: userObjectId, status: 'COMPLETED' } },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
 
-        // Tổng thu nhập (as seller)
+        // Tổng doanh thu (as seller) - tổng tiền trước khi trừ phí
+        const totalRevenue = await Transaction.aggregate([
+            { $match: { seller_id: userObjectId, status: 'COMPLETED' } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+
+        // Tổng thu nhập thực (as seller) - sau khi trừ phí platform
         const totalEarned = await Transaction.aggregate([
-            { $match: { seller_id: mongoose.Types.ObjectId(userId), status: 'COMPLETED' } },
+            { $match: { seller_id: userObjectId, status: 'COMPLETED' } },
+            { $group: { _id: null, total: { $sum: '$seller_amount' } } }
+        ]);
+
+        // Số tiền chờ chuyển (đã bán thành công nhưng chưa được admin chuyển tiền)
+        const pendingPayout = await Transaction.aggregate([
+            {
+                $match: {
+                    seller_id: userObjectId,
+                    status: 'COMPLETED',
+                    payout_status: { $ne: 'COMPLETED' }
+                }
+            },
+            { $group: { _id: null, total: { $sum: '$seller_amount' } } }
+        ]);
+
+        // Số tiền đã nhận (đã được admin chuyển)
+        const completedPayout = await Transaction.aggregate([
+            {
+                $match: {
+                    seller_id: userObjectId,
+                    status: 'COMPLETED',
+                    payout_status: 'COMPLETED'
+                }
+            },
             { $group: { _id: null, total: { $sum: '$seller_amount' } } }
         ]);
 
@@ -639,10 +729,18 @@ exports.getUserStats = async (req, res) => {
         res.json({
             success: true,
             data: {
+                // Buyer stats
                 totalSpent: totalSpent[0]?.total || 0,
-                totalEarned: totalEarned[0]?.total || 0,
                 purchaseCount,
-                salesCount,
+
+                // Seller stats
+                totalRevenue: totalRevenue[0]?.total || 0,  // Tổng doanh thu
+                totalEarned: totalEarned[0]?.total || 0,     // Thu nhập thực (sau trừ phí)
+                salesCount,                                   // Số lượt bán
+                pendingPayout: pendingPayout[0]?.total || 0, // Chờ rút tiền
+                completedPayout: completedPayout[0]?.total || 0, // Đã nhận
+
+                // Overall stats
                 completedCount: purchaseCount + salesCount,
                 pendingCount: await Transaction.countDocuments({
                     $or: [{ buyer_id: userId }, { seller_id: userId }],

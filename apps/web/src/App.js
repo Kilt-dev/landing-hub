@@ -6,6 +6,8 @@ import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import Pages from './pages/Pages';
 import Payments from './pages/Payments';
+import MyPayouts from './pages/MyPayouts';
+import AdminPayoutManagement from './pages/AdminPayoutManagement';
 import Reports from './pages/Reports';
 import Users from './pages/Users';
 import Templates from './pages/Templates';
@@ -58,6 +60,7 @@ function App() {
                             <Route path="/my-sales" element={<MySales />} />
                             <Route path="/setting-form" element={<FormData />} />
                             <Route path="/payments" element={<Payments />} />
+                            <Route path="/my-payouts" element={<MyPayouts />} />
                             <Route path="/payment/sandbox" element={<PaymentSandbox />} />
                             <Route path="/payment/result" element={<PaymentResult />} />
 
@@ -65,6 +68,7 @@ function App() {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/qltemplates" element={<AdminAddTemplate />} />
                             <Route path="/admin/marketplace" element={<AdminMarketplace />} />
+                            <Route path="/admin/payouts" element={<AdminPayoutManagement />} />
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/users" element={<Users />} />
                             {/* Catch-all route */}

@@ -34,6 +34,15 @@ class MomoService {
                             lang = 'vi'
                         }) {
         try {
+            // Kiểm tra credentials
+            if (!this.accessKey || !this.secretKey || this.accessKey === '' || this.secretKey === '') {
+                console.warn('⚠️ MOMO credentials not configured. Please set MOMO_ACCESS_KEY and MOMO_SECRET_KEY in .env');
+                return {
+                    success: false,
+                    error: 'MOMO chưa được cấu hình. Vui lòng liên hệ admin để thiết lập.'
+                };
+            }
+
             const requestId = orderId;
 
             // Raw signature

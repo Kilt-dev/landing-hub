@@ -558,7 +558,9 @@ exports.getSellerStats = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
         }
 
-        // Đếm số marketplace pages
+        console.log('getSellerStats userId:', userId);
+
+        // Đếm số marketplace pages - Mongoose tự convert string to ObjectId
         const totalPages = await MarketplacePage.countDocuments({ seller_id: userId });
         const activePages = await MarketplacePage.countDocuments({
             seller_id: userId,
@@ -571,6 +573,7 @@ exports.getSellerStats = async (req, res) => {
 
         // Tính tổng doanh thu
         const revenue = await Transaction.calculateRevenue({ seller_id: userId });
+        console.log('Revenue calculated:', revenue);
 
         // Lấy top selling pages
         const topPages = await MarketplacePage.find({ seller_id: userId })

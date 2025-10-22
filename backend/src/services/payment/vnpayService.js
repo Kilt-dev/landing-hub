@@ -43,6 +43,15 @@ class VNPayService {
                          locale = 'vn'
                      }) {
         try {
+            // Kiểm tra credentials
+            if (!this.tmnCode || !this.secretKey || this.tmnCode === 'VNPAY_TMN_CODE' || this.secretKey === 'VNPAY_SECRET_KEY') {
+                console.warn('⚠️ VNPay credentials not configured. Please set VNPAY_TMN_CODE and VNPAY_SECRET_KEY in .env');
+                return {
+                    success: false,
+                    error: 'VNPay chưa được cấu hình. Vui lòng liên hệ admin để thiết lập.'
+                };
+            }
+
             const date = new Date();
             const createDate = this.formatDate(date);
             const expireDate = this.formatDate(new Date(date.getTime() + 15 * 60 * 1000)); // 15 minutes

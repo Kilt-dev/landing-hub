@@ -17,7 +17,13 @@ const authMiddleware = (req, res, next) => {
             console.error('Invalid token: userId, id, or _id not found');
             return res.status(401).json({ msg: 'Invalid token: user ID not found' });
         }
-        req.user = decoded;
+
+        // Normalize user object - đảm bảo luôn có trường .id
+        req.user = {
+            ...decoded,
+            id: decoded.id || decoded.userId || decoded._id
+        };
+
         console.log('Set req.user:', req.user);
         next();
     } catch (err) {

@@ -63,6 +63,23 @@ const TransactionSchema = new mongoose.Schema({
         ],
         default: 'PENDING'
     },
+    // Trạng thái chuyển tiền cho seller
+    payout_status: {
+        type: String,
+        enum: [
+            'PENDING',      // Chờ chuyển tiền
+            'PROCESSING',   // Đang xử lý
+            'COMPLETED',    // Đã chuyển tiền
+            'FAILED'        // Thất bại
+        ],
+        default: 'PENDING'
+    },
+    // Payout ID nếu đã được tạo payout
+    payout_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payout',
+        default: null
+    },
     // ID giao dịch từ payment gateway
     payment_gateway_transaction_id: {
         type: String,
