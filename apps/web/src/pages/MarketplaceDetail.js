@@ -103,15 +103,18 @@ const MarketplaceDetail = () => {
             setLoading(false);
         }
     };
-
     const checkPurchaseStatus = async () => {
         try {
             const token = localStorage.getItem('token');
+            console.log('Check Purchase Token:', token);
+            if (!token) {
+                console.log('No token found for check-purchase');
+                setHasPurchased(false);
+                return;
+            }
             const response = await axios.get(
                 `${API_BASE_URL}/api/payment/check-purchase/${id}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
+                { headers: { Authorization: `Bearer ${token}` } }
             );
             setHasPurchased(response.data.hasPurchased || false);
         } catch (err) {
@@ -124,27 +127,22 @@ const MarketplaceDetail = () => {
         try {
             setPurchasing(true);
             const token = localStorage.getItem('token');
-
+            console.log('Purchase Token:', token);
+            if (!token) {
+                toast.error('Vui lòng đăng nhập để mua hàng');
+                navigate('/auth');
+                return;
+            }
             const response = await axios.post(
                 `${API_BASE_URL}/api/payment/create-transaction`,
-                {
-                    marketplace_page_id: id,
-                    payment_method: selectedPaymentMethod
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
+                { marketplace_page_id: id, payment_method: selectedPaymentMethod },
+                { headers: { Authorization: `Bearer ${token}` } }
             );
-
             if (response.data.success) {
                 const { payment_url, transaction_id } = response.data.data;
-
-                // Redirect to payment URL
                 if (selectedPaymentMethod === 'SANDBOX') {
-                    // For sandbox, show modal or redirect to local sandbox page
                     navigate(`/payment/sandbox?transaction_id=${transaction_id}`);
                 } else {
-                    // For real payment gateways, redirect to their payment page
                     window.location.href = payment_url;
                 }
             } else {

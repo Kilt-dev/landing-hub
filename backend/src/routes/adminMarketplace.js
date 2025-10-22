@@ -1,57 +1,51 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
-const adminMiddleware = require('../middleware/adminMiddleware');
+const authMiddleware = require('../middleware/authMiddleware');
+const { isAdmin } = require('../middleware/authMiddleware');
 const adminMarketplaceController = require('../controllers/adminMarketplaceController');
-
-/**
- * Tất cả routes đều yêu cầu authentication và admin role
- */
-router.use(auth);
-router.use(adminMiddleware);
 
 /**
  * Marketplace management
  */
 
 // Lấy danh sách pending pages
-router.get('/pending', adminMarketplaceController.getPendingPages);
+router.get('/pending', authMiddleware, isAdmin, adminMarketplaceController.getPendingPages);
 
 // Lấy tất cả marketplace pages
-router.get('/pages', adminMarketplaceController.getAllMarketplacePages);
+router.get('/pages', authMiddleware, isAdmin, adminMarketplaceController.getAllMarketplacePages);
 
 // Approve marketplace page
-router.post('/pages/:id/approve', adminMarketplaceController.approvePage);
+router.post('/pages/:id/approve', authMiddleware, isAdmin, adminMarketplaceController.approvePage);
 
 // Reject marketplace page
-router.post('/pages/:id/reject', adminMarketplaceController.rejectPage);
+router.post('/pages/:id/reject', authMiddleware, isAdmin, adminMarketplaceController.rejectPage);
 
 // Suspend marketplace page
-router.post('/pages/:id/suspend', adminMarketplaceController.suspendPage);
+router.post('/pages/:id/suspend', authMiddleware, isAdmin, adminMarketplaceController.suspendPage);
 
 // Toggle featured status
-router.post('/pages/:id/toggle-featured', adminMarketplaceController.toggleFeatured);
+router.post('/pages/:id/toggle-featured', authMiddleware, isAdmin, adminMarketplaceController.toggleFeatured);
 
 // Delete marketplace page
-router.delete('/pages/:id', adminMarketplaceController.deletePage);
+router.delete('/pages/:id', authMiddleware, isAdmin, adminMarketplaceController.deletePage);
 
 // Lấy marketplace statistics
-router.get('/stats', adminMarketplaceController.getMarketplaceStats);
+router.get('/stats', authMiddleware, isAdmin, adminMarketplaceController.getMarketplaceStats);
 
 /**
  * Transaction management
  */
 
 // Lấy tất cả transactions
-router.get('/transactions', adminMarketplaceController.getAllTransactions);
+router.get('/transactions', authMiddleware, isAdmin, adminMarketplaceController.getAllTransactions);
 
 // Lấy refund requests
-router.get('/refunds', adminMarketplaceController.getRefundRequests);
+router.get('/refunds', authMiddleware, isAdmin, adminMarketplaceController.getRefundRequests);
 
 // Process refund
-router.post('/refunds/process', adminMarketplaceController.processRefund);
+router.post('/refunds/process', authMiddleware, isAdmin, adminMarketplaceController.processRefund);
 
 // Reject refund
-router.post('/refunds/reject', adminMarketplaceController.rejectRefund);
+router.post('/refunds/reject', authMiddleware, isAdmin, adminMarketplaceController.rejectRefund);
 
 module.exports = router;
