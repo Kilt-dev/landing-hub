@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const cozeRoutes = require('./routes/coze');
 const app = express();
 const authMiddleware = require('./middleware/authMiddleware');
 require('dotenv').config();
@@ -29,4 +30,5 @@ app.use('/api/payment', require('./routes/payment'));
 app.use('/api/payout', require('./routes/payout'));
 app.use('/api/admin/marketplace', require('./routes/adminMarketplace'));
 
+app.use('/api/coze', require('./routes/coze'));
 module.exports = app;
