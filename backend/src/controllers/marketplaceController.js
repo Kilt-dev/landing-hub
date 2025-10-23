@@ -607,11 +607,27 @@ exports.getSellerStats = async (req, res) => {
  */
 exports.downloadAsHTML = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id || req.user?.userId || req.user?._id;
+        if (!userId) {
+            console.error('User ID is undefined in downloadAsHTML');
+            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
+        }
+
         const { id } = req.params;
 
-        const marketplacePage = await MarketplacePage.findById(id).populate('page_id');
-        if (!marketplacePage) return res.status(404).json({ success: false, message: 'Không tìm thấy marketplace page' });
+        const marketplacePage = await MarketplacePage.findById(id).populate([
+            { path: 'page_id' },
+            { path: 'seller_id', select: 'name email' }
+        ]);
+        if (!marketplacePage) {
+            console.error('MarketplacePage not found for ID:', id);
+            return res.status(404).json({ success: false, message: 'Không tìm thấy marketplace page' });
+        }
+
+        if (!marketplacePage.seller_id) {
+            console.error('seller_id is undefined for MarketplacePage:', id);
+            return res.status(500).json({ success: false, message: 'Dữ liệu seller_id không hợp lệ' });
+        }
 
         const order = await Order.findOne({
             marketplacePageId: id,
@@ -621,11 +637,15 @@ exports.downloadAsHTML = async (req, res) => {
 
         const isSeller = marketplacePage.seller_id.toString() === userId.toString();
         if (!order && !isSeller) {
-            return res.status(403).json({ success: false, message: 'Bạn cần mua và nhận landing page này trước khi tải xuống' });
+            return res.status(403).json({
+                success: false,
+                message: 'Bạn cần mua và nhận landing page này trước khi tải xuống'
+            });
         }
 
         const page = order ? await Page.findById(order.createdPageId) : marketplacePage.page_id;
         if (!page || !page.file_path) {
+            console.error('Page or file_path not found for MarketplacePage:', id, 'order:', order?._id);
             return res.status(400).json({ success: false, message: 'Landing page không có HTML content' });
         }
 

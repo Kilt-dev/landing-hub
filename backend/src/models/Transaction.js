@@ -208,7 +208,6 @@ TransactionSchema.virtual('formatted_paid_at').get(function() {
     return this.paid_at ? this.paid_at.toLocaleString('vi-VN') : null;
 });
 
-// models/Transaction.js
 TransactionSchema.methods.markAsPaid = async function(paymentGatewayData = {}) {
     try {
         console.log('markAsPaid called for transaction:', this._id);
@@ -221,7 +220,7 @@ TransactionSchema.methods.markAsPaid = async function(paymentGatewayData = {}) {
 
         const Order = require('./Order');
         const MarketplacePage = require('./MarketplacePage');
-        const { sendOrderConfirmation } = require('./email');
+        const { sendOrderConfirmation } = require('../services/email');
 
         let order = await Order.findOne({ transactionId: this._id });
         if (!order) {
