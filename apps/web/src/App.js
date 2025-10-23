@@ -30,6 +30,7 @@ import Blog from './components/about_public/Blog';
 import AdminAddTemplate from './components/AdminAddTemplate'; // Thêm component cho admin
 import AdminMarketplace from './pages/AdminMarketplace';
 import CozeChat from "./components/CozeChat";
+import AdminUser from "./pages/AdminUsers";
 function App() {
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
     return (
@@ -72,7 +73,7 @@ function App() {
                             <Route path="/admin/marketplace" element={<AdminMarketplace />} />
                             <Route path="/admin/payouts" element={<AdminPayoutManagement />} />
                             <Route path="/reports" element={<Reports />} />
-                            <Route path="/users" element={<Users />} />
+                            <Route path="/users" element={<AdminUser />} />
                             {/* Catch-all route */}
                             <Route path="*" element={<Navigate to="/auth" replace />} />
 
