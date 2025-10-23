@@ -1157,3 +1157,32 @@ exports.getPerformanceMetrics = async (req, res) => {
         });
     }
 };
+exports.deliverOrder = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const userId = req.user.id;
+
+        const order = await Order.findOne({ orderId });
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy order' });
+        }
+
+        const transaction = await Transaction.findById(order.transactionId);
+        if (!transaction || transaction.status !== 'COMPLETED') {
+            return res.status(400).json({ success: false, message: 'Giao dịch chưa hoàn tất' });
+        }
+
+        const marketplacePage = await MarketplacePage.findById(order.marketplacePageId);
+        if (!marketplacePage || (marketplacePage.seller_id.toString() !== userId && req.user.role !== 'admin')) {
+            return res.status(403).json({ success: false, message: 'Không có quyền giao order' });
+        }
+
+        await order.deliverPage();
+        console.log('Order delivered manually:', order.orderId);
+
+        res.json({ success: true, message: 'Giao page thành công', data: order });
+    } catch (error) {
+        console.error('Deliver Order Error:', error);
+        res.status(500).json({ success: false, message: 'Lỗi khi giao page', error: error.message });
+    }
+};

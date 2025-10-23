@@ -1,15 +1,13 @@
 const Page = require('../models/Page');
-const Transaction = require('../models/Transaction');
+const Order = require('../models/Order'); // Thêm Order
 const mongoose = require('mongoose');
 
-// ========== ULTIMATE DASHBOARD FIX ==========
 const getDashboardData = async (req, res) => {
     console.log('🔍 [DASHBOARD] START - User:', req.user);
 
     try {
-        // ✅ FIX 1: Get userId from req.user (can be userId, id, or _id)
+        // 1. Lấy userId từ req.user
         const userIdRaw = req.user.userId || req.user.id || req.user._id;
-
         if (!userIdRaw) {
             return res.status(401).json({
                 success: false,
@@ -21,27 +19,34 @@ const getDashboardData = async (req, res) => {
         if (mongoose.Types.ObjectId.isValid(userIdRaw)) {
             userId = new mongoose.Types.ObjectId(userIdRaw);
         } else {
-            userId = userIdRaw; // String OK too
+            userId = userIdRaw; // String UUID cho Order
         }
-
         console.log('✅ [DASHBOARD] userId:', userId, 'type:', typeof userId);
 
-        // ✅ FIX 2: COUNT PAGES
+        // 2. Đếm tổng số pages
         const totalCount = await Page.countDocuments({ user_id: userId });
         console.log('✅ [DASHBOARD] TOTAL PAGES IN DB:', totalCount);
 
-        // ✅ NEW: Get payment stats
-        const [purchaseStats, salesStats] = await Promise.all([
+        // 3. Thống kê mua/bán từ Order
+        const [purchaseStats, salesStats, lastPurchase, lastSale] = await Promise.all([
             // Purchase stats (as buyer)
-            Transaction.aggregate([
-                { $match: { buyer_id: userId, status: 'COMPLETED' } },
-                { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+            Order.aggregate([
+                { $match: { buyerId: userId, status: 'delivered' } },
+                { $group: { _id: null, total: { $sum: '$price' }, count: { $sum: 1 } } }
             ]),
             // Sales stats (as seller)
-            Transaction.aggregate([
-                { $match: { seller_id: userId, status: 'COMPLETED' } },
-                { $group: { _id: null, total: { $sum: '$seller_amount' }, count: { $sum: 1 } } }
-            ])
+            Order.aggregate([
+                { $match: { sellerId: userId, status: 'delivered' } },
+                { $group: { _id: null, total: { $sum: '$price' }, count: { $sum: 1 } } }
+            ]),
+            // Last purchase
+            Order.findOne({ buyerId: userId, status: 'delivered' })
+                .sort({ createdAt: -1 })
+                .populate('marketplacePageId', 'title'),
+            // Last sale
+            Order.findOne({ sellerId: userId, status: 'delivered' })
+                .sort({ createdAt: -1 })
+                .populate('marketplacePageId', 'title')
         ]);
 
         const paymentStats = {
@@ -50,9 +55,9 @@ const getDashboardData = async (req, res) => {
             totalEarned: salesStats[0]?.total || 0,
             salesCount: salesStats[0]?.count || 0
         };
-
         console.log('✅ [DASHBOARD] Payment stats:', paymentStats);
 
+        // 4. Nếu không có dữ liệu
         if (totalCount === 0 && paymentStats.purchaseCount === 0 && paymentStats.salesCount === 0) {
             return res.json({
                 success: true,
@@ -75,7 +80,7 @@ const getDashboardData = async (req, res) => {
             });
         }
 
-        // 3. STATS
+        // 5. Thống kê pages
         const stats = await Page.aggregate([
             { $match: { user_id: userId } },
             {
@@ -94,7 +99,7 @@ const getDashboardData = async (req, res) => {
         const statResult = stats[0] || { totalPages: 0, totalViews: 0, totalRevenue: 0, livePages: 0 };
         console.log('✅ [DASHBOARD] Stats:', statResult);
 
-        // 4. PAGES LIST
+        // 6. Lấy danh sách pages
         const pages = await Page.find({ user_id: userId })
             .select('name description status views revenue created_at screenshot_url url _id updated_at')
             .sort({ updated_at: -1 })
@@ -102,7 +107,7 @@ const getDashboardData = async (req, res) => {
             .lean();
 
         console.log('✅ [DASHBOARD] Found pages:', pages.length);
-        console.log('First page:', pages[0]?.name);
+        if (pages.length > 0) console.log('First page:', pages[0]?.name);
 
         const formattedPages = pages.map(page => ({
             id: page._id.toString(),
@@ -119,7 +124,7 @@ const getDashboardData = async (req, res) => {
 
         console.log('✅ [DASHBOARD] SUCCESS -', formattedPages.length, 'pages');
 
-        // Format số tiền VND
+        // 7. Format tiền VND
         const formatVND = (amount) => {
             return new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
@@ -130,7 +135,7 @@ const getDashboardData = async (req, res) => {
         res.json({
             success: true,
             data: {
-                // ========== TỔNG QUAN LANDING PAGES ==========
+                // TỔNG QUAN LANDING PAGES
                 pages: {
                     total: statResult.totalPages,
                     live: statResult.livePages,
@@ -138,8 +143,7 @@ const getDashboardData = async (req, res) => {
                     totalViews: statResult.totalViews.toLocaleString('vi-VN'),
                     totalRevenue: formatVND(statResult.totalRevenue)
                 },
-
-                // ========== THANH TOÁN - MUA ==========
+                // THANH TOÁN - MUA
                 purchases: {
                     title: 'Đã Mua',
                     count: paymentStats.purchaseCount,
@@ -147,10 +151,13 @@ const getDashboardData = async (req, res) => {
                     totalSpentRaw: paymentStats.totalSpent,
                     avgPerPurchase: paymentStats.purchaseCount > 0
                         ? formatVND(Math.round(paymentStats.totalSpent / paymentStats.purchaseCount))
-                        : formatVND(0)
+                        : formatVND(0),
+                    lastPurchase: lastPurchase ? {
+                        title: lastPurchase.marketplacePageId?.title || 'Unknown',
+                        date: new Date(lastPurchase.createdAt).toLocaleString('vi-VN')
+                    } : null
                 },
-
-                // ========== THANH TOÁN - BÁN ==========
+                // THANH TOÁN - BÁN
                 sales: {
                     title: 'Đã Bán',
                     count: paymentStats.salesCount,
@@ -159,10 +166,12 @@ const getDashboardData = async (req, res) => {
                     avgPerSale: paymentStats.salesCount > 0
                         ? formatVND(Math.round(paymentStats.totalEarned / paymentStats.salesCount))
                         : formatVND(0),
-                    pendingPayout: formatVND(0) // TODO: Tính từ payout_status
+                    lastSale: lastSale ? {
+                        title: lastSale.marketplacePageId?.title || 'Unknown',
+                        date: new Date(lastSale.createdAt).toLocaleString('vi-VN')
+                    } : null
                 },
-
-                // ========== SỐ DƯ ==========
+                // SỐ DƯ
                 balance: {
                     title: 'Số Dư Ròng',
                     amount: formatVND(paymentStats.totalEarned - paymentStats.totalSpent),
@@ -170,19 +179,16 @@ const getDashboardData = async (req, res) => {
                     status: paymentStats.totalEarned >= paymentStats.totalSpent ? 'positive' : 'negative',
                     canWithdraw: paymentStats.totalEarned > paymentStats.totalSpent
                 },
-
-                // ========== HOẠT ĐỘNG ==========
+                // HOẠT ĐỘNG
                 activity: {
                     totalTransactions: paymentStats.purchaseCount + paymentStats.salesCount,
-                    lastPurchase: null, // TODO
-                    lastSale: null // TODO
+                    lastPurchase: lastPurchase ? new Date(lastPurchase.createdAt).toLocaleString('vi-VN') : null,
+                    lastSale: lastSale ? new Date(lastSale.createdAt).toLocaleString('vi-VN') : null
                 },
-
-                // ========== DANH SÁCH PAGES ==========
+                // DANH SÁCH PAGES
                 pagesList: formattedPages
             }
         });
-
     } catch (error) {
         console.error('🚨 [DASHBOARD] ERROR:', error);
         res.status(500).json({

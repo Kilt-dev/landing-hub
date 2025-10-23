@@ -7,114 +7,97 @@ const TransactionSchema = new mongoose.Schema({
         default: uuidv4,
         match: [/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, 'Invalid UUID']
     },
-    // Marketplace page được mua
     marketplace_page_id: {
         type: String,
         required: true,
         ref: 'MarketplacePage'
     },
-    // Người mua
     buyer_id: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'User'
     },
-    // Người bán
     seller_id: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'User'
     },
-    // Số tiền giao dịch (VND)
     amount: {
         type: Number,
         required: true,
         min: 0
     },
-    // Phí platform (VND) - ví dụ 10% của amount
     platform_fee: {
         type: Number,
         default: 0,
         min: 0
     },
-    // Số tiền seller nhận được
     seller_amount: {
         type: Number,
         required: true,
         min: 0
     },
-    // Phương thức thanh toán
     payment_method: {
         type: String,
         enum: ['MOMO', 'VNPAY', 'SANDBOX', 'COD', 'BANK_TRANSFER'],
         required: true
     },
-    // Trạng thái giao dịch
     status: {
         type: String,
         enum: [
-            'PENDING',      // Chờ thanh toán
-            'PROCESSING',   // Đang xử lý
-            'COMPLETED',    // Hoàn thành
-            'FAILED',       // Thất bại
-            'CANCELLED',    // Đã hủy
-            'REFUNDED',     // Đã hoàn tiền
-            'REFUND_PENDING' // Chờ hoàn tiền
+            'PENDING',
+            'PROCESSING',
+            'COMPLETED',
+            'FAILED',
+            'CANCELLED',
+            'REFUNDED',
+            'REFUND_PENDING'
         ],
         default: 'PENDING'
     },
-    // Trạng thái chuyển tiền cho seller
     payout_status: {
         type: String,
         enum: [
-            'PENDING',      // Chờ chuyển tiền
-            'PROCESSING',   // Đang xử lý
-            'COMPLETED',    // Đã chuyển tiền
-            'FAILED'        // Thất bại
+            'PENDING',
+            'PROCESSING',
+            'COMPLETED',
+            'FAILED'
         ],
         default: 'PENDING'
     },
-    // Payout ID nếu đã được tạo payout
     payout_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Payout',
         default: null
     },
-    // ID giao dịch từ payment gateway
     payment_gateway_transaction_id: {
         type: String,
         trim: true,
         default: null
     },
-    // Response từ payment gateway
     payment_gateway_response: {
         type: mongoose.Schema.Types.Mixed,
         default: null
     },
-    // URL thanh toán (cho MOMO, VNPay)
     payment_url: {
         type: String,
         trim: true,
         default: null
     },
-    // Mã QR thanh toán (cho MOMO)
     qr_code_url: {
         type: String,
         trim: true,
         default: null
     },
-    // Deep link (cho MOMO app)
     deep_link: {
         type: String,
         trim: true,
         default: null
     },
-    // Thời gian thanh toán thành công
     paid_at: {
         type: Date,
         default: null
     },
-    // Thông tin refund
     refund: {
         reason: {
             type: String,
@@ -134,24 +117,20 @@ const TransactionSchema = new mongoose.Schema({
             trim: true
         }
     },
-    // Page được tạo sau khi mua (copy từ marketplace page)
     created_page_id: {
         type: String,
         ref: 'Page',
         default: null
     },
-    // Metadata bổ sung
     metadata: {
         type: mongoose.Schema.Types.Mixed,
         default: {}
     },
-    // IP address của buyer
     ip_address: {
         type: String,
         trim: true,
         default: null
     },
-    // User agent
     user_agent: {
         type: String,
         trim: true,
@@ -165,11 +144,10 @@ const TransactionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    // Expiry time cho transaction (30 phút)
     expires_at: {
         type: Date,
         default: function() {
-            return new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+            return new Date(Date.now() + 30 * 60 * 1000);
         }
     }
 }, {
@@ -183,18 +161,15 @@ TransactionSchema.index({ seller_id: 1, status: 1 });
 TransactionSchema.index({ marketplace_page_id: 1 });
 TransactionSchema.index({ payment_gateway_transaction_id: 1 });
 TransactionSchema.index({ status: 1, created_at: -1 });
-TransactionSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 }); // TTL index
+TransactionSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
 TransactionSchema.index({ created_at: -1 });
 
 // Pre-save middleware
 TransactionSchema.pre('save', function(next) {
     this.updated_at = new Date();
-
-    // Tự động tính seller_amount nếu chưa có
     if (!this.seller_amount && this.amount) {
         this.seller_amount = this.amount - this.platform_fee;
     }
-
     next();
 });
 
@@ -233,12 +208,67 @@ TransactionSchema.virtual('formatted_paid_at').get(function() {
     return this.paid_at ? this.paid_at.toLocaleString('vi-VN') : null;
 });
 
-// Methods
+// models/Transaction.js
 TransactionSchema.methods.markAsPaid = async function(paymentGatewayData = {}) {
-    this.status = 'COMPLETED';
-    this.paid_at = new Date();
-    this.payment_gateway_response = paymentGatewayData;
-    return this.save();
+    try {
+        console.log('markAsPaid called for transaction:', this._id);
+
+        this.status = 'COMPLETED';
+        this.paid_at = new Date();
+        this.payment_gateway_response = paymentGatewayData;
+        await this.save();
+        console.log('Transaction saved as COMPLETED:', this._id);
+
+        const Order = require('./Order');
+        const MarketplacePage = require('./MarketplacePage');
+        const { sendOrderConfirmation } = require('./email');
+
+        let order = await Order.findOne({ transactionId: this._id });
+        if (!order) {
+            console.log('No existing order found, creating new order...');
+            const marketplacePage = await MarketplacePage.findById(this.marketplace_page_id);
+            if (!marketplacePage) {
+                console.error('MarketplacePage not found for ID:', this.marketplace_page_id);
+                throw new Error('MarketplacePage not found');
+            }
+
+            order = new Order({
+                orderId: require('uuid').v4(),
+                transactionId: this._id,
+                buyerId: this.buyer_id,
+                sellerId: this.seller_id,
+                marketplacePageId: this.marketplace_page_id,
+                price: this.amount,
+                status: 'pending'
+            });
+            await order.save();
+            console.log('New order created:', order.orderId);
+        } else {
+            console.log('Found existing order:', order.orderId);
+        }
+
+        if (order.status === 'pending') {
+            await order.deliverPage();
+            console.log('Order delivered:', order.orderId);
+        } else {
+            console.log('Order already processed:', order.status);
+        }
+
+        // Gửi email nhưng không để lỗi email làm gián đoạn
+        try {
+            await sendOrderConfirmation(order);
+        } catch (emailError) {
+            console.error('Failed to send order confirmation, continuing...:', emailError);
+        }
+
+        await MarketplacePage.findByIdAndUpdate(this.marketplace_page_id, { $inc: { sold_count: 1 } });
+        console.log('Incremented sold_count for MarketplacePage:', this.marketplace_page_id);
+
+        return this;
+    } catch (error) {
+        console.error('Error in markAsPaid:', error);
+        throw error;
+    }
 };
 
 TransactionSchema.methods.markAsFailed = async function(reason) {
@@ -342,7 +372,6 @@ TransactionSchema.statics.calculateRevenue = async function(options = {}) {
     const match = { status: 'COMPLETED' };
 
     if (options.seller_id) {
-        // Convert to ObjectId if string
         match.seller_id = typeof options.seller_id === 'string'
             ? new mongoose.Types.ObjectId(options.seller_id)
             : options.seller_id;
@@ -356,8 +385,6 @@ TransactionSchema.statics.calculateRevenue = async function(options = {}) {
         match.created_at = { ...match.created_at, $lte: new Date(options.end_date) };
     }
 
-    console.log('calculateRevenue match:', JSON.stringify(match));
-
     const result = await this.aggregate([
         { $match: match },
         {
@@ -370,8 +397,6 @@ TransactionSchema.statics.calculateRevenue = async function(options = {}) {
             }
         }
     ]);
-
-    console.log('calculateRevenue result:', result);
 
     return result.length > 0 ? result[0] : {
         total_revenue: 0,

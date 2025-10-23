@@ -27,7 +27,7 @@ router.get('/admin/performance-metrics', authMiddleware, isAdmin, paymentControl
 /**
  * Protected routes - yêu cầu authentication
  */
-
+router.post('/orders/:orderId/deliver', authMiddleware, paymentController.deliverOrder);
 // User: Lấy lịch sử giao dịch của mình
 router.get('/transactions', authMiddleware, paymentController.getUserTransactions);
 

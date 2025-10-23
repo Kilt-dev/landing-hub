@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const s3CopyService = require('../services/s3CopyService');
 const screenshotService = require('../services/screenshotService');
 const exportService = require('../services/exportService');
-
+const Order = require('../models/Order');
 /**
  * Lấy danh sách marketplace pages (public)
  */
@@ -607,220 +607,102 @@ exports.getSellerStats = async (req, res) => {
  */
 exports.downloadAsHTML = async (req, res) => {
     try {
-        const userId = req.user?.id || req.user?.userId || req.user?._id;
-        if (!userId) {
-            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
-        }
+        const userId = req.user.id;
         const { id } = req.params;
 
         const marketplacePage = await MarketplacePage.findById(id).populate('page_id');
+        if (!marketplacePage) return res.status(404).json({ success: false, message: 'Không tìm thấy marketplace page' });
 
-        if (!marketplacePage) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy marketplace page'
-            });
-        }
-
-        // Kiểm tra user đã mua chưa
-        const hasPurchased = await Transaction.findOne({
-            marketplace_page_id: id,
-            buyer_id: userId,
-            status: 'COMPLETED'
+        const order = await Order.findOne({
+            marketplacePageId: id,
+            buyerId: userId,
+            status: 'delivered'
         });
 
-        // Hoặc là người bán
         const isSeller = marketplacePage.seller_id.toString() === userId.toString();
-
-        if (!hasPurchased && !isSeller) {
-            return res.status(403).json({
-                success: false,
-                message: 'Bạn cần mua landing page này trước khi tải xuống'
-            });
+        if (!order && !isSeller) {
+            return res.status(403).json({ success: false, message: 'Bạn cần mua và nhận landing page này trước khi tải xuống' });
         }
 
-        // Lấy page gốc để lấy HTML từ S3
-        const originalPage = marketplacePage.page_id;
-        if (!originalPage || !originalPage.file_path) {
-            return res.status(400).json({
-                success: false,
-                message: 'Landing page không có HTML content'
-            });
+        const page = order ? await Page.findById(order.createdPageId) : marketplacePage.page_id;
+        if (!page || !page.file_path) {
+            return res.status(400).json({ success: false, message: 'Landing page không có HTML content' });
         }
 
-        // Generate ZIP file với HTML từ S3
-        const zipPath = await exportService.exportAsHTMLZip(
-            marketplacePage,
-            marketplacePage.page_data,
-            originalPage.file_path  // Pass S3 path
-        );
-
-        // Send file
-        res.download(zipPath, `${marketplacePage.title}.zip`, (err) => {
-            // Cleanup temp file after sending
-            exportService.cleanupTempFile(zipPath);
-
-            if (err) {
-                console.error('Download error:', err);
-            }
-        });
+        const zipPath = await exportService.exportAsHTMLZip(marketplacePage, page.page_data, page.file_path);
+        res.download(zipPath, `${marketplacePage.title}.zip`, () => exportService.cleanupTempFile(zipPath));
     } catch (error) {
         console.error('Download HTML Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi tải xuống HTML',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Lỗi khi tải xuống HTML', error: error.message });
     }
 };
 
-/**
- * Download marketplace page as .iuhpage
- */
 exports.downloadAsIUHPage = async (req, res) => {
     try {
-        const userId = req.user?.id || req.user?.userId || req.user?._id;
-        if (!userId) {
-            return res.status(401).json({ success: false, message: 'Không thể xác thực người dùng' });
-        }
+        const userId = req.user.id;
         const { id } = req.params;
 
         const marketplacePage = await MarketplacePage.findById(id).populate('page_id');
+        if (!marketplacePage) return res.status(404).json({ success: false, message: 'Không tìm thấy marketplace page' });
 
-        if (!marketplacePage) {
-            return res.status(404).json({
-                success: false,
-                message: 'Không tìm thấy marketplace page'
-            });
-        }
-
-        // Kiểm tra user đã mua chưa
-        const hasPurchased = await Transaction.findOne({
-            marketplace_page_id: id,
-            buyer_id: userId,
-            status: 'COMPLETED'
+        const order = await Order.findOne({
+            marketplacePageId: id,
+            buyerId: userId,
+            status: 'delivered'
         });
 
-        // Hoặc là người bán
         const isSeller = marketplacePage.seller_id.toString() === userId.toString();
-
-        if (!hasPurchased && !isSeller) {
-            return res.status(403).json({
-                success: false,
-                message: 'Bạn cần mua landing page này trước khi tải xuống'
-            });
+        if (!order && !isSeller) {
+            return res.status(403).json({ success: false, message: 'Bạn cần mua và nhận landing page này trước khi tải xuống' });
         }
 
-        // Lấy page gốc để lấy HTML từ S3
-        const originalPage = marketplacePage.page_id;
-        if (!originalPage || !originalPage.file_path) {
-            return res.status(400).json({
-                success: false,
-                message: 'Landing page không có HTML content'
-            });
+        const page = order ? await Page.findById(order.createdPageId) : marketplacePage.page_id;
+        if (!page || !page.file_path) {
+            return res.status(400).json({ success: false, message: 'Landing page không có HTML content' });
         }
 
-        // Generate .iuhpage file với HTML từ S3
-        const filePath = await exportService.exportAsIUHPage(
-            marketplacePage,
-            marketplacePage.page_data,
-            originalPage.file_path  // Pass S3 path
-        );
-
-        // Send file
-        res.download(filePath, `${marketplacePage.title}.iuhpage`, (err) => {
-            // Cleanup temp file after sending
-            exportService.cleanupTempFile(filePath);
-
-            if (err) {
-                console.error('Download error:', err);
-            }
-        });
+        const filePath = await exportService.exportAsIUHPage(marketplacePage, page.page_data, page.file_path);
+        res.download(filePath, `${marketplacePage.title}.iuhpage`, () => exportService.cleanupTempFile(filePath));
     } catch (error) {
         console.error('Download IUHPage Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi tải xuống .iuhpage',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Lỗi khi tải xuống .iuhpage', error: error.message });
     }
 };
-
 /**
  * Get purchased pages - Lấy danh sách các page đã mua
  */
 exports.getPurchasedPages = async (req, res) => {
     try {
-        const userId = req.user?.id || req.user?.userId || req.user?._id;
-        if (!userId) {
-            return res.status(401).json({
-                success: false,
-                message: 'Không thể xác thực người dùng'
-            });
-        }
-
+        const userId = req.user.id;
         const { page = 1, limit = 12, search, category } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        // Tìm tất cả transactions đã hoàn thành của user
-        const completedTransactions = await Transaction.find({
-            buyer_id: userId,
-            status: 'COMPLETED'
-        }).select('marketplace_page_id created_at');
-
-        // Lấy danh sách marketplace_page_id
-        const marketplacePageIds = completedTransactions.map(t => t.marketplace_page_id);
-
-        if (marketplacePageIds.length === 0) {
-            return res.json({
-                success: true,
-                data: [],
-                pagination: {
-                    currentPage: 1,
-                    totalPages: 0,
-                    totalItems: 0,
-                    itemsPerPage: parseInt(limit)
-                }
-            });
-        }
-
-        // Build query
-        let query = { _id: { $in: marketplacePageIds } };
-
+        let query = { buyerId: userId, status: 'delivered' };
         if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
-            ];
+            query['marketplacePageId.title'] = { $regex: search, $options: 'i' };
         }
-
         if (category && category !== 'all') {
-            query.category = category;
+            query['marketplacePageId.category'] = category;
         }
 
-        // Get total count
-        const totalItems = await MarketplacePage.countDocuments(query);
+        const totalItems = await Order.countDocuments(query);
 
-        // Get purchased pages with seller info
-        const purchasedPages = await MarketplacePage.find(query)
-            .populate('seller_id', 'name email')
-            .populate('page_id', 'title')
-            .sort({ created_at: -1 })
+        const orders = await Order.find(query)
+            .populate({
+                path: 'marketplacePageId',
+                select: 'title description main_screenshot price category',
+                populate: { path: 'seller_id', select: 'name email' }
+            })
+            .populate('createdPageId', 'name status url html_url file_path')
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
 
-        // Add purchase date to each page
-        const pagesWithPurchaseDate = purchasedPages.map(page => {
-            const transaction = completedTransactions.find(
-                t => t.marketplace_page_id.toString() === page._id.toString()
-            );
-            return {
-                ...page.toObject(),
-                purchased_at: transaction?.created_at
-            };
-        });
-
-        console.log(`Found ${purchasedPages.length} purchased pages for user ${userId}`);
+        const pagesWithPurchaseDate = orders.map(order => ({
+            ...order.marketplacePageId.toObject(),
+            purchased_at: order.createdAt,
+            delivered_page: order.createdPageId
+        }));
 
         res.json({
             success: true,
@@ -834,10 +716,6 @@ exports.getPurchasedPages = async (req, res) => {
         });
     } catch (error) {
         console.error('Get Purchased Pages Error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi khi lấy danh sách page đã mua',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Lỗi khi lấy danh sách page đã mua', error: error.message });
     }
 };
