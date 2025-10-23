@@ -520,17 +520,142 @@
     color: #28a745;
     font-weight: 600;
 }
-.review-list { margin-top: 24px; }
-.review-item {
-    border-bottom: 1px solid #eee;
-    padding: 12px 0;
+.review-list,
+.review-box {
+    margin-top: var(--space-xl);
+    padding: var(--space-xl);
+    background-color: var(--color-bg-container);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
 }
+
+/* --- Section Headers (h4) --- */
+.review-list h4,
+.review-box h4 {
+    font-family: var(--font-serif);
+    font-size: 1.5rem; /* Match h3 sizing */
+    color: var(--color-text-header);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* --- Individual Review Item --- */
+.review-item {
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Remove border from the last item */
+.review-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.review-item:first-child {
+    padding-top: 0;
+}
+
+
+/* --- Review Header (Author & Date) --- */
 .review-head {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 6px;
+    align-items: center;
+    margin-bottom: var(--space-sm);
 }
-.review-date { font-size: 0.85em; color: #666; }
-.review-comment { margin-top: 6px; color: #333; }
-.stars { color: #ffc107; }
-.stars svg { margin-right: 2px; }
+
+.review-head strong {
+    font-weight: 600;
+    color: var(--color-text-header);
+    font-size: 1rem;
+}
+
+.review-date {
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+}
+
+/* --- Star Rating Display --- */
+.stars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: var(--space-md);
+    color: #e0e0e0; /* Default color for empty stars */
+}
+
+.stars svg {
+    font-size: 1.1rem;
+    transition: color 0.2s ease;
+}
+
+.stars .filled {
+    color: #ffc107; /* Gold color for filled stars */
+}
+
+.stars i {
+    font-style: normal;
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-left: var(--space-sm);
+}
+
+/* --- Review Comment Text --- */
+.review-comment {
+    margin-top: var(--space-sm);
+    color: var(--color-text-body);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* --- "Your Review" Submission Box --- */
+.review-box .stars {
+    cursor: pointer;
+}
+
+.review-box textarea {
+    width: 100%;
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: var(--color-text-body);
+    transition: var(--transition);
+    background-color: var(--color-bg-main);
+    resize: vertical;
+}
+
+.review-box textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(161, 138, 109, 0.2);
+}
+
+.review-box button {
+    /* Re-using styles from .action-btn for consistency */
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition);
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.review-box button:hover {
+    background-color: #b9a589; /* A slightly lighter shade */
+}
+
+.review-box button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
