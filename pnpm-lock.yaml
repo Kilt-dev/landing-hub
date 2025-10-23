@@ -8,31 +8,76 @@ importers:
 
   .:
     dependencies:
-      '@react-oauth/google':
-        specifier: ^0.12.0
-        version: 0.12.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      axios:
-        specifier: ^1.6.0
-        version: 1.12.2
-      react:
-        specifier: ^19.1.1
-        version: 19.1.1
-      react-dom:
-        specifier: ^19.1.1
-        version: 19.1.1(react@19.1.1)
-    devDependencies:
-      autoprefixer:
-        specifier: ^10.4.21
-        version: 10.4.21(postcss@8.5.6)
-      pnpm:
+      archiver:
+        specifier: ^7.0.1
+        version: 7.0.1
+      aws-sdk:
+        specifier: ^2.1376.0
+        version: 2.1692.0
+      bcryptjs:
+        specifier: ^2.4.3
+        version: 2.4.3
+      cheerio:
+        specifier: ^1.1.2
+        version: 1.1.2
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.2.3
+      express:
+        specifier: ^4.21.2
+        version: 4.21.2
+      express-validator:
+        specifier: ^7.2.1
+        version: 7.2.1
+      google-auth-library:
         specifier: ^9.0.0
-        version: 9.15.9
-      postcss:
-        specifier: ^8.5.6
-        version: 8.5.6
-      tailwindcss:
-        specifier: ^4.1.15
-        version: 4.1.15
+        version: 9.15.1
+      jsonwebtoken:
+        specifier: ^9.0.0
+        version: 9.0.2
+      loader:
+        specifier: ^2.1.1
+        version: 2.1.1
+      mongoose:
+        specifier: ^8.0.0
+        version: 8.18.1(socks@2.8.7)
+      multer:
+        specifier: ^2.0.2
+        version: 2.0.2
+      multer-s3:
+        specifier: ^3.0.1
+        version: 3.0.1(@aws-sdk/client-s3@3.908.0)
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
+      nodemailer:
+        specifier: ^7.0.9
+        version: 7.0.9
+      openai:
+        specifier: ^5.20.3
+        version: 5.20.3(ws@8.18.3)(zod@3.25.76)
+      puppeteer:
+        specifier: ^24.21.0
+        version: 24.21.0(typescript@4.9.5)
+      qs:
+        specifier: ^6.14.0
+        version: 6.14.0
+      sharp:
+        specifier: ^0.34.4
+        version: 0.34.4
+      uuid:
+        specifier: ^8.3.2
+        version: 8.3.2
+    devDependencies:
+      eslint:
+        specifier: ^9.38.0
+        version: 9.38.0(jiti@1.21.7)
+      nodemon:
+        specifier: ^3.0.0
+        version: 3.1.10
 
   apps/mobile:
     dependencies:
@@ -251,6 +296,9 @@ importers:
       aws-sdk:
         specifier: ^2.1376.0
         version: 2.1692.0
+      axios:
+        specifier: ^1.12.2
+        version: 1.12.2
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
@@ -8808,9 +8856,6 @@ packages:
     resolution: {integrity: sha512-w33E2aCvSDP0tW9RZuNXadXlkHXqFzSkQew/aIa2i/Sj8fThxwovwlXHSPXTbAHwEIhBFXAedUhP2tueAKP8Og==}
     engines: {node: '>=14.0.0'}
     hasBin: true
-
-  tailwindcss@4.1.15:
-    resolution: {integrity: sha512-k2WLnWkYFkdpRv+Oby3EBXIyQC8/s1HOFMBUViwtAh6Z5uAozeUSMQlIsn/c6Q2iJzqG6aJT3wdPaRNj70iYxQ==}
 
   tapable@1.1.3:
     resolution: {integrity: sha512-4WK/bYZmj8xLr+HUCODHGF1ZFzsYffasLUgEiMBY4fgtltdO6B4WJtlSbPaDTLpYTcGVwM2qLnFTICEcNxs3kA==}
@@ -20815,8 +20860,6 @@ snapshots:
       sucrase: 3.35.0
     transitivePeerDependencies:
       - ts-node
-
-  tailwindcss@4.1.15: {}
 
   tapable@1.1.3: {}
 
