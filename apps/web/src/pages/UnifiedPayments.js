@@ -192,7 +192,6 @@ const UnifiedPayments = () => {
             setTotalPages(data.pagination?.totalPages || 1);
         } catch (error) {
             console.error('Error fetching purchased orders:', error.response?.status, error.response?.data, error.message);
-            toast.error(`Không tải được đơn hàng đã mua: ${error.response?.data?.message || error.message}`);
             setOrders([]);
             setOrderTransactions([]);
         } finally {
@@ -233,7 +232,6 @@ const UnifiedPayments = () => {
             }
         } catch (error) {
             console.error('Error fetching sold orders:', error.response?.status, error.response?.data, error.message);
-            toast.error(`Không tải được đơn hàng đã bán: ${error.response?.data?.message || error.message}`);
             setSoldOrders([]);
             if (viewMode === 'sold') setOrderTransactions([]);
         } finally {
