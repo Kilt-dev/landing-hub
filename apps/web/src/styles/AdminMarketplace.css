@@ -66,17 +66,19 @@ body {
 }
 
 .admin-marketplace-main {
-
     display: flex;
     width: 100%;
+    /* CẬP NHẬT: Thêm padding-bottom để thanh nav mobile không che nội dung */
+    padding-bottom: 90px;
 }
 
 .admin-marketplace-content {
     margin-top: 20px;
-    margin-left: 220px;
+    margin-left: 220px; /* Dành cho Sidebar desktop */
     flex: 1;
     padding: var(--space-2xl);
     overflow-y: auto;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Thêm transition */
 }
 
 /* ============================================
@@ -94,7 +96,6 @@ body {
     font-weight: 700;
     margin-bottom: var(--space-sm);
     letter-spacing: -0.5px;
-    /* CẬP NHẬT: Thêm flex để căn chỉnh icon */
     display: flex;
     align-items: center;
     gap: var(--space-md);
@@ -193,7 +194,6 @@ body {
     transform: translateY(-2px);
 }
 
-/* CẬP NHẬT: Tối ưu căn giữa cho icon SVG */
 .stat-icon {
     min-width: 60px;
     height: 60px;
@@ -492,7 +492,6 @@ body {
     flex-wrap: wrap;
 }
 
-/* CẬP NHẬT: Đưa inline style vào CSS */
 .page-meta span {
     display: flex;
     align-items: center;
@@ -880,6 +879,8 @@ body {
 @media (max-width: 768px) {
     .admin-marketplace-content {
         padding: var(--space-lg);
+        /* CẬP NHẬT: Xóa margin-left cho mobile */
+        margin-left: 0;
     }
 
     .admin-marketplace-header h1 {
@@ -1079,6 +1080,10 @@ body {
         border-bottom: none;
     }
 
+    /* LƯU Ý: File JS của bạn đã cung cấp 'data-label',
+      vì vậy không cần dùng 'nth-of-type' ở đây.
+      CSS này sẽ tự động hoạt động chính xác.
+    */
     .orders-table td::before {
         content: attr(data-label);
         font-weight: 600;

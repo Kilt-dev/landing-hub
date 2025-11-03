@@ -21,6 +21,7 @@ const CozeChat = () => {
                     componentProps: {
                         title: 'LandingHub Assistant',
                         description: 'Trợ lý AI của bạn',
+
                     },
                     // SỬA LẠI CHO ĐÚNG:
                     // Sử dụng hằng số YOUR_COZE_PAT_TOKEN đã khai báo ở trên

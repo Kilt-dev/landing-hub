@@ -1,17 +1,68 @@
-/* * =========================================
- * USER DASHBOARD STYLES
- * Phong cách: Clear & Elegant (Rõ ràng & Sang trọng)
+/* =========================================
+ * USER DASHBOARD STYLES (v2 - Refactored)
+ * Phong cách: Clear, Elegant & Responsive
  * =========================================
  */
 
+/* * -- BIẾN MÀU & THUỘC TÍNH (CSS VARIABLES) --
+ * Giúp dễ dàng thay đổi toàn bộ giao diện
+ */
+:root {
+    --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-heading-alt: Georgia, 'Times New Roman', Times, serif;
+
+    /* Colors */
+    --c-text-dark: #1f2937;
+    --c-text-medium: #4b5563;
+    --c-text-light: #6b7280;
+    --c-border: #e5e7eb;
+    --c-bg: #ffffff;
+    --c-bg-alt: #f3f4f6;
+    --c-bg-hover: #f9fafb;
+
+    /* Brand & Status */
+    --c-blue: #3b82f6;
+    --c-blue-bg: #eff6ff;
+    --c-purple: #8b5cf6;
+    --c-purple-bg: #f5f3ff;
+    --c-green: #10b981;
+    --c-green-text: #059669;
+    --c-green-bg: #f0fdf4;
+    --c-yellow: #f59e0b;
+    --c-yellow-text: #d97706;
+    --c-yellow-bg: #fffbeb;
+    --c-red: #ef4444;
+    --c-red-bg: #fef2f2;
+    --c-red-border: #fecaca;
+
+    /* Sizing & Effects */
+    --radius-lg: 12px;
+    --radius-md: 8px;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
+    --transition: all 0.2s ease-in-out;
+}
+
+/* * -- BASE CONTAINER --
+ */
 .user-dashboard {
     width: 100%;
     box-sizing: border-box;
-    /* Sử dụng font Inter nếu có, nếu không thì dùng font hệ thống */
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-primary);
+
+    /* === SỬA LỖI GỐC (MOBILE) === */
+    /* Thêm padding cho nội dung (desktop sẽ ghi đè sau) */
+    /* Giả sử header cao 70px */
+    padding-top: 86px; /* 70px header + 16px lề */
+    padding-left: 16px;
+    padding-right: 16px;
+    /* Thêm padding-bottom cho thanh nav mobile (nếu có) */
+    padding-bottom: 90px;
 }
 
-/* -- Dashboard Header -- */
+/* * -- DASHBOARD HEADER --
+ */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
@@ -22,131 +73,179 @@
 }
 
 .dashboard-header h1 {
-    font-size: 26px; /* Giảm nhẹ để thanh lịch hơn */
+    font-size: 26px;
     font-weight: 700;
-    color: #1f2937; /* Màu đen xám đậm */
+    color: var(--c-text-dark);
     margin: 0;
 }
 
-/* === ĐÃ CHỈNH SỬA === */
 .dashboard-header p {
-    font-size: 17px; /* Tăng kích thước cho dễ đọc */
-    color: #4b5563; /* Làm màu xám đậm hơn một chút */
-    margin: 8px 0 0 0; /* Tăng khoảng cách với H1 */
+    font-size: 17px;
+    color: var(--c-text-medium);
+    margin: 8px 0 0 0;
 }
 
-/* === ĐÃ CHỈNH SỬA === */
 .dashboard-header p strong {
-    color: #3b82f6; /* Dùng màu xanh dương (blue) làm điểm nhấn */
-    font-weight: 700; /* Tăng độ đậm */
+    color: var(--c-blue);
+    font-weight: 700;
 }
 
 .btn-refresh {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #ffffff; /* Nền trắng */
-    color: #374151; /* Màu chữ xám */
-    border: 1px solid #e5e7eb; /* Viền xám rất nhạt */
-    border-radius: 8px;
+    background: var(--c-bg);
+    color: var(--c-text-medium);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
     padding: 10px 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     font-weight: 500;
     font-size: 14px;
-    /* Bóng đổ nhẹ, tinh tế */
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-refresh:hover {
-    background: #f9fafb; /* Hơi xám khi hover */
+    background: var(--c-bg-hover);
     border-color: #d1d5db;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07);
     transform: translateY(-1px);
 }
 
-/* -- Stats Grid -- */
+/* * -- LOADING & ERROR STATES --
+ */
+.dashboard-loading,
+.dashboard-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: var(--c-text-medium);
+}
+
+.dashboard-loading .spin {
+    animation: spin 1.5s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.dashboard-loading p {
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.dashboard-error h3 {
+    font-size: 1.25rem;
+    color: var(--c-red);
+    margin: 1rem 0 0.5rem 0;
+}
+.dashboard-error p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+.btn-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--c-red-bg);
+    color: var(--c-red);
+    border: 1px solid var(--c-red-border);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+}
+.btn-retry:hover {
+    background: #fee2e2;
+}
+
+/* * -- STATS GRID --
+ */
 .stats-grid {
     display: grid;
+    /* Tự động chia cột:
+     * - Desktop > 1200px: 4 cột
+     * - Desktop < 1200px: 3 cột
+     * - Tablet > 768px: 2 cột
+     */
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 24px; /* Tăng khoảng cách */
+    gap: 24px;
     margin-bottom: 32px;
 }
 
 .stat-card {
-    background: #ffffff; /* Nền trắng tinh */
-    border: 1px solid #e5e7eb; /* Viền xám nhạt */
-    border-radius: 12px; /* Bo góc nhiều hơn */
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
     padding: 24px;
-    /* Bóng đổ chính, mềm mại */
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease-in-out;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
     display: flex;
     gap: 20px;
     align-items: flex-start;
-
-    /* === THÊM ĐIỂM NHẤN === */
-    /* Thêm 1 đường viền dày 3px ở trên cùng với màu trong suốt */
-    /* để chuẩn bị cho việc đổi màu mà không làm giật layout */
+    /* Viền màu trên cùng */
     border-top: 3px solid transparent;
 }
 
-/* === THÊM ĐIỂM NHẤN "WOW" === */
-/* Thêm viền màu tương ứng cho từng thẻ */
-.stat-card.pages {
-    border-top-color: #3b82f6;
-}
-.stat-card.purchases {
-    border-top-color: #8b5cf6;
-}
-.stat-card.sales {
-    border-top-color: #10b981;
-}
-.stat-card.balance {
-    border-top-color: #f59e0b;
-}
-/* Nếu balance dương, ưu tiên màu xanh lá */
-.stat-card.balance.positive {
-    border-top-color: #10b981;
-}
-
-
 .stat-card:hover {
-    transform: translateY(-5px); /* Nâng cao hơn khi hover */
-    /* Bóng đổ lớn hơn khi hover */
-    box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
 }
+
+/* Viền màu & Icon (Tương ứng với JS) */
+.stat-card.pages { border-top-color: var(--c-blue); }
+.stat-card.pages .card-icon {
+    background: var(--c-blue-bg);
+    color: var(--c-blue);
+}
+
+.stat-card.purchases { border-top-color: var(--c-purple); }
+.stat-card.purchases .card-icon {
+    background: var(--c-purple-bg);
+    color: var(--c-purple);
+}
+
+.stat-card.sales { border-top-color: var(--c-green); }
+.stat-card.sales .card-icon {
+    background: var(--c-green-bg);
+    color: var(--c-green);
+}
+
+.stat-card.balance { border-top-color: var(--c-yellow); }
+.stat-card.balance .card-icon {
+    background: var(--c-yellow-bg);
+    color: var(--c-yellow);
+}
+/* Trạng thái Positive đặc biệt */
+.stat-card.balance.positive { border-top-color: var(--c-green); }
+.stat-card.balance.positive .card-icon {
+    background: var(--c-green-bg);
+    color: var(--c-green);
+}
+
 
 .stat-card .card-icon {
     width: 48px;
     height: 48px;
-    border-radius: 50%; /* Icon bo tròn */
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: var(--transition); /* Thêm transition cho icon */
 }
 
-/* Chỉ dùng màu cho icon và nền icon */
-.stat-card.pages .card-icon {
-    background: #eff6ff; /* Nền xanh rất nhạt */
-    color: #3b82f6; /* Icon màu xanh */
-}
-.stat-card.purchases .card-icon {
-    background: #f5f3ff; /* Nền tím rất nhạt */
-    color: #8b5cf6; /* Icon màu tím */
-}
-.stat-card.sales .card-icon {
-    background: #f0fdf4; /* Nền xanh lá rất nhạt */
-    color: #10b981; /* Icon màu xanh lá */
-}
-.stat-card.balance .card-icon {
-    background: #fffbeb; /* Nền vàng rất nhạt */
-    color: #f59e0b; /* Icon màu vàng */
-}
-.stat-card.balance.positive .card-icon {
-    background: #f0fdf4;
-    color: #10b981;
+/* Thay đổi kích thước icon bên trong (JS dùng lucide-react) */
+.stat-card .card-icon svg {
+    width: 28px;
+    height: 28px;
+    transition: var(--transition);
 }
 
 .stat-card .card-content {
@@ -155,48 +254,66 @@
 
 .stat-card h3 {
     margin: 0 0 4px 0;
-    font-size: 14px; /* Tiêu đề nhỏ, nhường chỗ cho số liệu */
+    font-size: 14px;
     font-weight: 500;
-    color: #6b7280;
+    color: var(--c-text-light);
 }
 
 .stat-card .value {
-    font-size: 30px; /* Số liệu thật LỚN và RÕ */
+    font-size: 30px;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--c-text-dark);
     margin-bottom: 8px;
     line-height: 1.1;
 }
 
 .stat-card .meta {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--c-text-light);
     font-weight: 500;
     margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 4px; /* Khoảng cách giữa các span */
 }
 
-.stat-card .meta .separator {
-    margin: 0 6px;
+/* Tự động thêm dấu • giữa các span trong .meta (nếu có)
+ * (An toàn cho JS vì nó chỉ áp dụng nếu có 2 span trở lên)
+ */
+.stat-card .meta span + span::before {
+    content: "•";
+    margin-right: 4px;
+    color: var(--c-text-light);
 }
+
+/* CSS cho .live và .draft (từ JS) */
 .stat-card .meta .live {
-    color: #10b981;
+    color: var(--c-green);
     font-weight: 600;
 }
 .stat-card .meta .draft {
-    color: #f59e0b;
+    color: var(--c-yellow);
     font-weight: 600;
 }
+/* Hủy bỏ dấu • nếu span liền kề là .live hoặc .draft */
+.stat-card .meta span.live::before,
+.stat-card .meta span.draft::before {
+    content: "•";
+    margin-right: 4px;
+    color: var(--c-text-light);
+}
+
 
 .stat-card .footer {
     font-size: 13px;
-    color: #6b7280;
-    /* Bỏ viền top để "sạch" hơn */
+    color: var(--c-text-light);
     padding-top: 0;
     margin-top: 0;
     border: none;
 }
 
-/* -- Pages Section -- */
+/* * -- PAGES SECTION --
+ */
 .pages-section {
     margin-bottom: 32px;
 }
@@ -208,41 +325,39 @@
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 20px;
-    /* Thêm viền dưới cho tiêu đề section */
     padding-bottom: 16px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--c-border);
 }
 
-/* === ĐÃ CHỈNH SỬA === */
 .pages-section .section-header h2 {
     font-size: 20px;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--c-text-dark);
     margin: 0;
-    /* Đổi sang font serif sang trọng */
-    font-family: Georgia, 'Times New Roman', Times, serif;
-    font-style: italic; /* Thêm kiểu nghiêng để tăng độ tinh tế */
+    font-family: var(--font-heading-alt);
+    font-style: italic;
 }
 
 .pages-section .section-header .page-count {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--c-text-light);
     font-weight: 500;
 }
 
 .pages-grid {
     display: grid;
+    /* Tự động chia cột, tối thiểu 300px */
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 24px;
 }
 
 .page-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease-in-out;
-    overflow: hidden;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    overflow: hidden; /* Đảm bảo ảnh không tràn */
 }
 
 .page-card:hover {
@@ -254,31 +369,28 @@
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 10;
-    background-color: #f3f4f6;
-    /* Thêm viền dưới cho ảnh */
-    border-bottom: 1px solid #e5e7eb;
+    background-color: var(--c-bg-alt);
+    border-bottom: 1px solid var(--c-border);
 }
 
 .page-card .page-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Đảm bảo ảnh vừa vặn */
 }
 
-/* Thay đổi style cho status: Dùng "chấm" + Chữ */
+/* Status badge (LIVE / DRAFT) */
 .page-card .page-status {
     position: absolute;
     top: 12px;
     right: 12px;
-
     display: inline-flex;
     align-items: center;
     gap: 6px;
-
+    /* Hiệu ứng mờ kính (glassmorphism) */
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(0, 0, 0, 0.05);
-
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 12px;
@@ -286,7 +398,7 @@
     text-transform: uppercase;
 }
 
-/* Tạo một "chấm" tròn */
+/* Chấm tròn trạng thái */
 .page-card .page-status::before {
     content: '';
     width: 8px;
@@ -295,17 +407,17 @@
 }
 
 .page-card .page-status.live {
-    color: #059669;
+    color: var(--c-green-text);
 }
 .page-card .page-status.live::before {
-    background: #10b981;
+    background: var(--c-green);
 }
 
 .page-card .page-status.draft {
-    color: #d97706;
+    color: var(--c-yellow-text);
 }
 .page-card .page-status.draft::before {
-    background: #f59e0b;
+    background: var(--c-yellow);
 }
 
 
@@ -317,7 +429,8 @@
     margin: 0 0 12px 0;
     font-size: 17px;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--c-text-dark);
+    /* Chống vỡ layout do tiêu đề dài */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -330,7 +443,7 @@
     align-items: center;
     gap: 12px;
     font-size: 14px;
-    color: #6b7280;
+    color: var(--c-text-light);
     font-weight: 500;
 }
 
@@ -340,19 +453,140 @@
     gap: 6px;
 }
 
-/* -- Responsive -- */
+/* =========================================
+ * -- RESPONSIVE STYLES (ĐÃ SỬA) --
+ * =========================================
+ */
+
+/* * -- TABLET (<= 768px) --
+ * Stats Grid: auto-fit (sẽ tự động xuống 2 cột)
+ * Pages Grid: 1 cột
+ */
 @media (max-width: 768px) {
+    /* === SỬA LỖI PADDING (TABLET) === */
+    .user-dashboard {
+        padding: 20px;
+        padding-top: 86px; /* 70px header + 16px lề */
+        padding-bottom: 90px;
+    }
+
     .dashboard-header {
         flex-direction: column;
         align-items: flex-start;
     }
 
+    /* === SỬA LỖI NÚT REFRESH === */
+    /* Nút "Làm mới" 100% chiều rộng, căn giữa */
+    .btn-refresh {
+        width: 100%;
+        justify-content: center;
+    }
+    /* === KẾT THÚC SỬA === */
+
+    /* Giảm font header cho tablet & mobile */
+    .dashboard-header h1 {
+        font-size: 24px;
+    }
+    .dashboard-header p {
+        font-size: 16px;
+    }
+
     .stats-grid {
-        grid-template-columns: 1fr;
+        gap: 20px; /* Giảm khoảng cách 1 chút */
     }
 
     .pages-grid {
+        /* Chuyển Pages List về 1 cột */
         grid-template-columns: 1fr;
+    }
+
+    .page-card .page-content {
+        padding: 16px;
+    }
+}
+
+/* * -- MOBILE (<= 480px) --
+ * Stats Grid: 2 cột (UI/UX Mới)
+ * Page Grid: 1 cột (kế thừa từ tablet)
+ */
+@media (max-width: 480px) {
+    /* === SỬA LỖI PADDING (MOBILE) === */
+    .user-dashboard {
+        padding: 16px;
+        padding-top: 86px; /* 70px header + 16px lề */
+        padding-bottom: 90px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 22px;
+    }
+    .dashboard-header p {
+        font-size: 15px;
+    }
+
+    /* * -- THIẾT KẾ LẠI LƯỚI 2X2 CHO MOBILE --
+     */
+    .stats-grid {
+        /* === THAY ĐỔI: Quay lại 2 cột === */
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px; /* Giảm gap cho 2 cột */
+    }
+
+    .stat-card {
+        /* === THAY ĐỔI: Xếp dọc (icon trên, text dưới) === */
+        flex-direction: column;
+        align-items: flex-start; /* Căn trái nội dung */
+        padding: 12px; /* Giảm padding để thẻ to hơn */
+        gap: 10px; /* Giảm gap bên trong thẻ */
+    }
+
+    /* Thu nhỏ icon */
+    .stat-card .card-icon {
+        width: 36px;
+        height: 36px;
+    }
+    .stat-card .card-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Thu nhỏ font */
+    .stat-card h3 {
+        font-size: 12px; /* Nhỏ hơn 1 chút */
+        margin-bottom: 2px;
+    }
+    .stat-card .value {
+        font-size: 22px; /* Nhỏ hơn 1 chút */
+        margin-bottom: 6px;
+        line-height: 1.1; /* Fix chiều cao */
+    }
+
+    /* === THAY ĐỔI: Sửa lỗi vỡ text "LIVE/DRAFT" === */
+    .stat-card .meta {
+        font-size: 11px;
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+
+    /* Bỏ dấu "•" */
+    .stat-card .meta span + span::before,
+    .stat-card .meta span.live::before,
+    .stat-card .meta span.draft::before {
+        content: none;
+        margin-right: 0;
+    }
+
+    /* Cho "LIVE" và "DRAFT" xếp dọc */
+    .stat-card .meta .live,
+    .stat-card .meta .draft {
+        display: block; /* Xếp dọc */
+        margin-left: 0;
+    }
+
+    .stat-card .footer {
+        font-size: 11px;
+        margin-bottom: 0;
+        line-height: 1.3;
     }
 }
 

@@ -250,7 +250,7 @@ const LandingList = ({
                                 </button>
                             </div>
 
-                            <div className="page-content">
+                            <div className="card-details">
                                 <div className="page-header">
                                     <h3 className="page-title" title={page.name}>
                                         {page.name}

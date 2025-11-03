@@ -155,3 +155,95 @@
     font-size: 13px;
     color: #475569;
 }
+/* =========================================
+ * -- PHẦN RESPONSIVE BỔ SUNG --
+ * Thêm vào cuối file PageContent.css
+ * =========================================
+ */
+
+/* * -- TABLET & MOBILE (<= 768px) --
+ * Đây là breakpoint chính để sửa lỗi
+ */
+@media (max-width: 768px) {
+
+    /* 1. Sửa layout chính: Xóa margin-left */
+    .page-content {
+        /* Ép xóa margin-left của sidebar desktop */
+        margin-left: 0 !important;
+        padding: 16px; /* Giảm padding cho vừa màn hình */
+        padding-bottom: 90px; /* Vẫn giữ khoảng trống cho bottom nav */
+    }
+
+    /* 2. Sửa Header (Tiêu đề và nút "Tạo") */
+    .page-content .content-header {
+        flex-direction: column; /* Xếp dọc */
+        align-items: flex-start; /* Căn lề trái */
+        gap: 16px; /* Khoảng cách giữa tiêu đề và nút */
+        padding: 16px; /* Giảm padding header */
+        top: 60px; /* Điều chỉnh vị trí sticky (nếu header chính của bạn cao 60px) */
+    }
+
+    .page-content .content-header h1 {
+        font-size: 22px; /* Giảm cỡ chữ */
+    }
+
+    /* 3. Sửa nút "Tạo" */
+    .page-content .create-btn {
+        width: 100%; /* Cho nút chiếm 100% chiều rộng */
+        padding: 14px 20px; /* Giảm padding nút cho hợp lý */
+        justify-content: center; /* Căn giữa chữ và icon */
+        box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
+    }
+
+    /* 4. Sửa Controls (Search và Filter) */
+    .page-content .controls {
+        flex-direction: column; /* Xếp dọc */
+        margin-left: 0 !important; /* Ép xóa margin-left */
+        max-width: 100%; /* Chiếm 100% */
+        gap: 12px; /* Giảm khoảng cách */
+        margin-top: 24px; /* Thêm khoảng cách với header */
+    }
+
+    .page-content .search-box,
+    .page-content .filters {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .page-content .filters {
+        flex-direction: column; /* Filter cũng xếp dọc */
+        gap: 10px;
+    }
+
+    .page-content .filter-select {
+        width: 100%; /* Select chiếm 100% */
+    }
+}
+
+/* * -- MOBILE NHỎ (<= 480px) --
+ * Tinh chỉnh thêm
+ */
+@media (max-width: 480px) {
+    .page-content {
+        padding: 12px; /* Giảm padding thêm */
+        padding-bottom: 90px;
+    }
+
+    .page-content .content-header {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .page-content .content-header h1 {
+        font-size: 20px;
+    }
+
+    .page-content .create-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+
+    .page-content .controls {
+        margin-top: 16px;
+    }
+}

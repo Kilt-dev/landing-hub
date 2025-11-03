@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // 1. Thêm import useEffect
 import { Eye, X, Monitor, Smartphone } from "lucide-react";
 import "../styles/PreviewModal.css";
 
@@ -16,6 +16,19 @@ const PreviewModal = ({ selectedTemplate, setShowPreviewModal, setPreviewHtml, p
             handleClose(e);
         }
     };
+
+    // 2. THÊM MỚI: Đóng modal bằng phím Escape
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") {
+                handleClose(e);
+            }
+        };
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [handleClose]); // Thêm dependency để đảm bảo hàm luôn đúng
 
     return (
         <div className="modal1-overlay modal1-overlay--preview" onClick={handleOverlayClick}>
@@ -39,7 +52,7 @@ const PreviewModal = ({ selectedTemplate, setShowPreviewModal, setPreviewHtml, p
                         </button>
                         <button
                             onClick={handleClose}
-                            className="btn-close"
+                            className="btn-close" // 3. Thống nhất tên class
                             aria-label="Đóng modal"
                             title="Đóng (Esc)"
                         >
@@ -58,13 +71,9 @@ const PreviewModal = ({ selectedTemplate, setShowPreviewModal, setPreviewHtml, p
                                             <span className="control-btn red"></span>
                                             <span className="control-btn yellow"></span>
                                             <span className="control-btn green"></span>
-                                            <p className="modal1-title" style={{
-                                                margin: "6px 0 0 0",
-                                                color: "#64748b",
-                                                fontSize: "0.875rem",
-                                                fontWeight: "500",
-                                            }}>
-                                            {selectedTemplate?.name || "Template Preview"}
+                                            {/* 4. XÓA BỎ INLINE STYLE */}
+                                            <p className="modal1-title">
+                                                {selectedTemplate?.name || "Template Preview"}
                                             </p>
                                         </div>
                                         <iframe
@@ -78,17 +87,12 @@ const PreviewModal = ({ selectedTemplate, setShowPreviewModal, setPreviewHtml, p
                                     // MOBILE VIEW
                                     <div className="mobile-preview">
                                         <div className="mobile-frame">
+                                            {/* 5. XÓA BỎ INLINE STYLE */}
                                             <iframe
                                                 srcDoc={previewHtml}
                                                 className="modal1-iframe"
                                                 title="Mobile Preview"
                                                 sandbox="allow-scripts allow-same-origin allow-popups"
-                                                style={{
-                                                    width: "475px", // Chuẩn kích thước mobile
-                                                    height: "667px", // Chuẩn chiều cao iPhone
-                                                    border: "none",
-                                                    transformOrigin: "top center",
-                                                }}
                                             />
                                         </div>
                                         <div className="mobile-home-button"></div>

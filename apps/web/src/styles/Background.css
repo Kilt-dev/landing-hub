@@ -1,4 +1,4 @@
-/* Background.css */
+/* === Các style gốc (desktop) không đổi === */
 .background-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #fafafa 0%, #f4f4f5 100%);
@@ -12,7 +12,7 @@
     pointer-events: none;
 }
 
-/* Yellow circle - top left */
+/* === Decorative shapes === */
 .shape-yellow-circle {
     position: absolute;
     top: 10px;
@@ -25,7 +25,6 @@
     z-index: 2;
 }
 
-/* Large blue shape - left side with curved organic form */
 .shape-blue-large {
     position: absolute;
     top: 150px;
@@ -39,7 +38,6 @@
     z-index: 1;
 }
 
-/* Purple overlay layer inside blue */
 .shape-purple-overlay {
     position: absolute;
     top: 200px;
@@ -53,7 +51,6 @@
     z-index: 2;
 }
 
-/* Pink shape - bottom right */
 .shape-pink-bottom {
     position: absolute;
     bottom: -100px;
@@ -66,7 +63,7 @@
     z-index: 1;
 }
 
-/* Navigation */
+/* === NAVBAR === */
 .navbar {
     position: relative;
     z-index: 10;
@@ -102,6 +99,11 @@
     gap: 40px;
 }
 
+/* Ẩn hamburger trên desktop */
+.menu-toggle {
+    display: none;
+}
+
 .menu-link {
     color: #4b5563;
     text-decoration: none;
@@ -133,7 +135,7 @@
     border-color: #3b82f6;
 }
 
-/* Main Content Area */
+/* === Main Content === */
 .main-content-lo {
     position: relative;
     z-index: 10;
@@ -157,28 +159,135 @@
     overflow: hidden;
 }
 
-/* Responsive Design */
+/* === Responsive (mobile & tablet) === */
+/* === ĐÂY LÀ KHỐI ĐÃ ĐƯỢC CẬP NHẬT === */
 @media (max-width: 768px) {
+
+    /* 1. Navbar Container (Logo trái, Toggle phải) */
+    .navbar {
+        /* Đảm bảo navbar luôn ở trên cùng */
+        position: sticky;
+        top: 0;
+        z-index: 1001; /* Navbar và Toggle phải ở trên overlay */
+    }
     .navbar-container {
-        padding: 12px 20px;
-        gap: 20px;
+        padding: 12px 16px;
+        justify-content: space-between;
     }
 
+    /* 2. Ẩn các item desktop */
     .menu-items {
-        gap: 24px;
+        display: none; /* Ẩn list link */
+    }
+    .language-selector {
+        display: none; /* Ẩn language-selector */
     }
 
-    /* Stack forms vertically on mobile */
-    .content-wrapper {
-        flex-direction: column;
-        max-width: 440px;
-        gap: 24px;
+    /* 3. Hiển thị & Style icon Hamburger */
+    .menu-toggle {
+        display: block;
+        width: 28px;
+        height: 22px;
+        cursor: pointer;
+        position: relative;
+        z-index: 1001; /* Luôn ở trên cùng */
     }
 
-    .form-container,
-    .login-form,
-    .register-form {
-        min-width: unset;
+    .menu-toggle span {
+        position: absolute;
+        height: 3px;
         width: 100%;
+        background: #4b5563;
+        border-radius: 3px;
+        left: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease, top 0.3s ease;
+    }
+
+    .menu-toggle span:nth-child(1) { top: 0; }
+    .menu-toggle span:nth-child(2) { top: 9px; }
+    .menu-toggle span:nth-child(3) { top: 18px; }
+
+
+    /* === 4. Style Menu khi mở (SỬ DỤNG BODY.MENU-OPEN) === */
+
+    /* Khóa cuộn trang khi menu mở */
+    body.menu-open {
+        overflow: hidden;
+    }
+
+    /* Biến hamburger thành dấu 'X' */
+    body.menu-open .menu-toggle span:nth-child(1) {
+        top: 9px;
+        transform: rotate(45deg);
+    }
+    body.menu-open .menu-toggle span:nth-child(2) {
+        opacity: 0;
+    }
+    body.menu-open .menu-toggle span:nth-child(3) {
+        top: 9px;
+        transform: rotate(-45deg);
+    }
+
+    /* Biến .menu-items thành overlay toàn màn hình */
+    body.menu-open .menu-items {
+        display: flex;
+        flex-direction: column;
+        position: fixed; /* Chiếm toàn màn hình */
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 100vh;
+
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+
+        /* Căn lề nội dung */
+        padding: 90px 24px 24px 24px; /* Đẩy nội dung xuống dưới navbar */
+        gap: 24px;
+        text-align: left;
+        align-items: flex-start;
+        overflow-y: auto;
+        z-index: 1000; /* Nằm dưới navbar và 'X' */
+
+        animation: fadeDown 0.25s ease;
+    }
+
+    /* Style các link trong menu overlay */
+    body.menu-open .menu-link {
+        font-size: 20px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    /* Hiển thị language-selector ở dưới cùng */
+    body.menu-open .language-selector {
+        display: block;
+        position: fixed;
+        bottom: 24px; /* Đặt ở dưới cùng */
+        left: 24px;
+        right: 24px;
+        width: calc(80% - 48px); /* Chiếm toàn bộ chiều rộng */
+        z-index: 1000; /* Nằm trên overlay */
+
+        /* Style cho dễ nhìn */
+        margin-left: 0;
+        padding: 12px;
+        font-size: 16px;
+        background: #f4f4f5;
+        border-radius: 8px;
+        border-color: #e5e7eb;
+    }
+
+    @keyframes fadeDown {
+        from { opacity: 0; transform: translateY(-15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Main content */
+    .content-wrapper {
+        max-width: 100%;
+        padding: 0 16px;
     }
 }
+

@@ -141,7 +141,7 @@
 }
 
 /* Page Content */
-.page-content {
+.card-details {
     padding: 24px;
 }
 
@@ -336,7 +336,7 @@
         border-radius: 16px;
     }
 
-    .page-content {
+    .card-details {
         padding: 20px;
     }
 
@@ -371,7 +371,7 @@
         height: 160px;
     }
 
-    .page-content {
+    .card-details {
         padding: 16px;
     }
 

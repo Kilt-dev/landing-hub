@@ -1,4 +1,4 @@
-/* --- Biến màu và cài đặt chung (Light Mode) --- */
+/* === 1. BIẾN MÀU VÀ CÀI ĐẶT CHUNG (LIGHT MODE) === */
 :root {
     --bg-main: #f4f7fa; /* Nền chính màu xám rất nhạt */
     --bg-surface: #ffffff; /* Nền trắng cho các card, form */
@@ -11,19 +11,19 @@
     --danger-hover: #c53030;
     --success-color: #38a169;
     --success-hover: #2f855a;
-    --font-family: 'Poppins', sans-serif;
+    --font-family: 'Poppins', -apple-system, system-ui, sans-serif;
     --shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
     --border-radius: 12px;
 }
 
 body {
-    margin-top: 70px;
+    /* Xóa margin-top: 70px; vì Header component sẽ xử lý việc này */
     font-family: var(--font-family);
     background-color: var(--bg-main);
     color: var(--text-primary);
 }
 
-/* --- Layout chính --- */
+/* === 2. LAYOUT CHÍNH (DESKTOP) === */
 .admin-user-container {
     display: flex;
     background-color: var(--bg-main);
@@ -33,12 +33,20 @@ body {
 .admin-user-main {
     flex-grow: 1;
     transition: all 0.3s ease;
+    /* Thêm padding-bottom để chuẩn bị cho thanh nav mobile.
+       Trên desktop không ảnh hưởng gì. */
+    padding-bottom: 90px;
 }
 
 .admin-user-content {
-    margin-top: 10px;
+    /* LƯU Ý: margin-left này phụ thuộc vào trạng thái compact của Sidebar.
+      Bạn nên đồng bộ logic này với Sidebar.js (ví dụ: dùng 240px khi không compact
+      hoặc dùng chung CSS class trên body).
+      Tạm thời giữ nguyên 90px theo file gốc của bạn.
+    */
     margin-left: 90px;
     padding: 2.5rem;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .admin-header {
@@ -67,6 +75,7 @@ body {
     font-size: 1.75rem; /* Kích thước icon */
     width: 60px;
     height: 60px;
+    flex-shrink: 0; /* Không bị co lại */
     border-radius: 50%; /* Bo tròn */
     background-color: rgba(108, 92, 231, 0.1); /* Nền mờ màu accent */
     color: var(--primary-accent);
@@ -74,7 +83,7 @@ body {
 
 .header-title h1 {
     margin: 0;
-    font-size: 1.75rem; /* Giảm kích thước một chút cho cân đối */
+    font-size: 1.75rem;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -85,7 +94,7 @@ body {
     color: var(--text-secondary);
 }
 
-/* --- Form Thêm/Sửa --- */
+/* === 3. FORM THÊM/SỬA (DESKTOP) === */
 .admin-user-form {
     background: var(--bg-surface);
     padding: 2rem;
@@ -108,6 +117,7 @@ body {
     color: var(--text-primary);
     font-size: 0.95rem;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box; /* Thêm để padding không làm vỡ layout */
 }
 
 .admin-user-form input::placeholder {
@@ -128,7 +138,7 @@ body {
     min-width: 150px;
 }
 
-/* --- Table Quản lý User --- */
+/* === 4. BẢNG QUẢN LÝ USER (DESKTOP) === */
 .user-table-container {
     background: var(--bg-surface);
     padding: 2rem;
@@ -150,6 +160,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
     border-bottom: 2px solid var(--border-color);
+    white-space: nowrap; /* Giữ tiêu đề trên 1 hàng */
 }
 
 .user-table td {
@@ -157,6 +168,7 @@ body {
     color: var(--text-primary);
     font-weight: 400;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: middle; /* Căn giữa theo chiều dọc */
 }
 
 .user-table tbody tr {
@@ -171,7 +183,7 @@ body {
     border-bottom: none;
 }
 
-/* --- Nút bấm (Buttons) --- */
+/* === 5. NÚT BẤM (BUTTONS) === */
 .btn-primary, .btn-edit, .btn-delete {
     padding: 0.7rem 1.5rem;
     border: none;
@@ -182,6 +194,7 @@ body {
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-family: var(--font-family); /* Đảm bảo font nhất quán */
 }
 
 .btn-primary {
@@ -204,6 +217,7 @@ body {
 .btn-edit, .btn-delete {
     padding: 0.5rem 1rem;
     font-size: 0.8rem;
+    white-space: nowrap; /* Ngăn nút bị vỡ chữ */
 }
 
 .btn-edit {
@@ -226,4 +240,133 @@ body {
 .btn-delete:hover {
     background-color: var(--danger-color);
     color: white;
+}
+
+
+/* === 6. RESPONSIVE CHO MOBILE === */
+@media (max-width: 768px) {
+
+    /* 6.1. Layout chính */
+    .admin-user-main {
+        /* Đã thêm padding-bottom: 90px; ở trên */
+    }
+
+    .admin-user-content {
+        margin-left: 0; /* Xóa margin cho sidebar desktop */
+        padding: 1.5rem 1rem; /* Giảm padding trên mobile */
+    }
+
+    /* 6.2. Header */
+    .admin-header {
+        padding: 1.5rem 1rem;
+        flex-direction: column; /* Xếp chồng icon và text */
+        align-items: flex-start;
+        gap: 1rem;
+        border-left: none; /* Bỏ border trái */
+        border-top: 50px solid var(--primary-accent); /* Thay bằng border trên */
+    }
+
+    .header-title {
+        gap: 0.75rem;
+    }
+
+    .icon-wrapper {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .header-title h1 {
+        font-size: 1.5rem;
+    }
+
+    .header-title p {
+        font-size: 0.9rem;
+    }
+
+    /* 6.3. Form */
+    .admin-user-form {
+        padding: 1.5rem 1rem;
+        gap: 1rem;
+    }
+
+    .admin-user-form button {
+        justify-self: stretch; /* Nút bấm chiếm 100% chiều rộng */
+        width: 100%;
+    }
+
+    /* 6.4. Bảng (Table) -> Chuyển sang dạng Card */
+    .user-table-container {
+        padding: 1rem 0;
+        background: transparent; /* Tắt nền container */
+        box-shadow: none; /* Tắt bóng container */
+        overflow-x: visible;
+    }
+
+    .user-table {
+        border-collapse: separate; /* Cần thiết để border-radius hoạt động */
+        border-spacing: 0;
+    }
+
+    .user-table thead {
+        display: none; /* Ẩn tiêu đề bảng */
+    }
+
+    .user-table tbody,
+    .user-table tr {
+        display: block; /* Mỗi hàng là 1 block */
+    }
+
+    .user-table tr {
+        background: var(--bg-surface);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .user-table td {
+        display: flex; /* Chuyển sang flex để tạo cặp Tiêu đề: Giá trị */
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0.25rem;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.9rem;
+        text-align: right; /* Căn phải cho giá trị */
+    }
+
+    .user-table tr td:last-child {
+        border-bottom: none; /* Bỏ border cho item cuối */
+    }
+
+    /* Phép thuật CSS: Thêm tiêu đề bằng ::before */
+    .user-table td::before {
+        content: attr(data-label); /* Sẽ dùng JS để thêm data-label, nhưng vì không được, ta dùng cách dưới */
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-right: 1rem;
+        text-align: left; /* Căn trái cho tiêu đề */
+    }
+
+    /* Hardcode tiêu đề (Vì không sửa JS) */
+    .user-table td:nth-of-type(1)::before { content: 'Tên'; }
+    .user-table td:nth-of-type(2)::before { content: 'Email'; }
+    .user-table td:nth-of-type(3)::before { content: 'Role'; }
+    .user-table td:nth-of-type(4)::before { content: 'Gói'; }
+    .user-table td:nth-of-type(5)::before { content: 'Ngày tạo'; }
+    .user-table td:nth-of-type(6)::before { content: 'Hành động'; }
+
+    /* Style cho ô Hành động */
+    td.action-cell {
+        justify-content: flex-end; /* Căn các nút sang phải */
+    }
+
+    td.action-cell::before {
+        align-self: center; /* Căn giữa label "Hành động" với các nút */
+    }
+
+    .btn-edit, .btn-delete {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+    }
 }

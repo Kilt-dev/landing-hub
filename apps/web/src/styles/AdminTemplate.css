@@ -1,98 +1,92 @@
+/* ============================================
+   ADMIN TEMPLATES - RESPONSIVE DESIGN
+   ============================================ */
 
-/* Main Layout */
-.templates-page {
-    display: flex;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #fef3f8 0%, #f0f9ff 50%, #f0fdf4 100%);
-    position: relative;
-    overflow: hidden;
-}
-
-/* Add cute blur bubble background effects */
-.templates-page::before {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -10%;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
-    border-radius: 50%;
-    filter: blur(60px);
-    animation: float 15s ease-in-out infinite;
-    z-index: 0;
-}
-
-.templates-page::after {
-    content: "";
-    position: absolute;
-    bottom: -30%;
-    right: -5%;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
-    border-radius: 50%;
-    filter: blur(70px);
-    animation: float 20s ease-in-out infinite reverse;
-    z-index: 0;
-}
-
-/* Additional bubble layers for more depth */
-.templates-page {
-    --bubble-1: radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
-    --bubble-2: radial-gradient(circle, rgba(34, 197, 94, 0.08) 0%, transparent 70%);
-}
-
-/* Main Content */
-.templates-main {
-
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Header */
-.header {
-    background: #ffffff;
-    border-bottom: 1px solid #e4e7eb;
-    padding: 1rem 1.5rem;
-    color: #1f2a44;
-    margin-bottom: 2rem;
-    border-radius: 12px;
-}
+/* === 1. BIẾN MÀU VÀ CÀI ĐẶT CHUNG === */
 :root {
     --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
     --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
     --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    --card-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.1);
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+    --font-serif: "Georgia", "Garamond", serif;
 }
 
-/* Stats Section */
+/* === 2. LAYOUT CHÍNH === */
+.templates-page {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fef3f8 0%, #f0f9ff 50%, #f0fdf4 100%);
+    position: relative;
+    overflow-x: hidden; /* Ngăn cuộn ngang tổng thể */
+}
+
+/* Hiệu ứng nền */
+.templates-page::before,
+.templates-page::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    z-index: 0;
+    opacity: 0.7;
+}
+
+.templates-page::before {
+    top: -30%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+    animation: float 15s ease-in-out infinite;
+}
+
+.templates-page::after {
+    bottom: -30%;
+    right: -5%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    animation: float 20s ease-in-out infinite reverse;
+}
+
+.templates-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+/* === 3. STATS SECTION === */
 .stats-section {
-    margin-bottom: 3rem;
-    margin-top: 1rem;
-    margin-left: 240px;
+    margin-bottom: 2rem;
+    /* CẬP NHẬT: Tăng margin-top để không bị Header che */
+    margin-top: 80px; /* Thêm margin để không bị Header che */
+    margin-left: 250px; /* Chuẩn hóa margin cho sidebar desktop */
+    padding: 0 1.5rem;
     animation: slideInDown 0.6s ease-out;
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
 }
 
 .stats-card {
     background: white;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1.25rem;
     box-shadow: var(--card-shadow);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     position: relative;
     overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .stats-card:hover {
@@ -107,13 +101,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--primary-gradient);
-    opacity: 0;
     transition: opacity 0.3s ease;
-}
-
-.stats-card:hover::before {
-    opacity: 1;
 }
 
 .stats-card--total::before { background: linear-gradient(90deg, #3b82f6, #1e40af); }
@@ -123,28 +111,31 @@
 .stats-card--usage::before { background: linear-gradient(90deg, #ec4899, #be185d); }
 
 .stats-card__label {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: #64748b;
     font-weight: 600;
     text-transform: uppercase;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 .stats-card__value {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: #1e293b;
 }
 
-/* Controls Section */
+/* === 4. CONTROLS SECTION === */
 .controls-section {
     margin-bottom: 2rem;
-    margin-left: 70px;
+    padding: 0 1.5rem;
     animation: slideInUp 0.6s ease-out;
 }
 
 .controls-grid {
-    margin-left: 170px;
+    margin-left: 250px; /* Chuẩn hóa margin */
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
@@ -154,7 +145,7 @@
 .button-upload, .button-toggle {
     background: var(--primary-gradient);
     color: white;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1.25rem;
     border: none;
     border-radius: 8px;
     font-weight: 600;
@@ -163,6 +154,7 @@
     gap: 0.5rem;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    font-size: 0.875rem;
 }
 
 .button-upload:hover, .button-toggle:hover {
@@ -188,19 +180,19 @@
 .search-input {
     flex: 1;
     min-width: 200px;
-    padding-left: 2.5rem;
 }
 
-/* Templates Grid */
+/* === 5. TEMPLATES GRID === */
 .templates-content {
-    margin-left: 210px;
+    margin-left: 250px; /* Chuẩn hóa margin */
+    padding: 0 1.5rem;
     animation: fadeIn 0.6s ease-out;
 }
 
 .templates-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .template-card {
@@ -211,6 +203,7 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: flex;
     flex-direction: column;
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
 .template-card:hover {
@@ -231,10 +224,9 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
+    object-position: top; /* Thường preview landing page nên lấy phần đầu */
     transition: transform 0.3s ease;
     display: block;
-    loading: lazy;
 }
 
 .template-card:hover .template-image {
@@ -250,14 +242,12 @@
     justify-content: center;
     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
     color: #94a3b8;
-    font-size: 1rem;
-    text-align: center;
-    padding: 1rem;
 }
 
 .image-placeholder-text {
     margin-top: 0.5rem;
     font-weight: 500;
+    font-size: 0.875rem;
 }
 
 /* Badges */
@@ -267,6 +257,7 @@
     right: 0.75rem;
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 0.5rem;
 }
 
@@ -278,15 +269,15 @@
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.6);
     color: white;
     backdrop-filter: blur(10px);
     animation: slideInRight 0.3s ease-out;
 }
 
-.badge--featured { background: rgba(139, 92, 246, 0.9); }
-.badge--premium { background: rgba(245, 158, 11, 0.9); }
-.badge--status { background: rgba(107, 114, 128, 0.9); }
+.badge--featured { background: rgba(139, 92, 246, 0.8); }
+.badge--premium { background: rgba(245, 158, 11, 0.8); }
+.badge--status { background: rgba(107, 114, 128, 0.8); }
 
 /* Card Overlay */
 .card-overlay {
@@ -295,7 +286,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -310,7 +301,9 @@
 
 .card-overlay .btn {
     padding: 0.75rem;
-    border-radius: 6px;
+    border-radius: 50%; /* Nút tròn */
+    border: none;
+    cursor: pointer;
     transition: transform 0.2s ease, background 0.2s ease;
 }
 
@@ -319,14 +312,22 @@
 }
 
 /* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+}
+
 .btn--primary {
     background: var(--primary-gradient);
     color: white;
 }
 
 .btn--secondary {
-    background: #6b7280;
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1e293b;
 }
 
 .btn--delete {
@@ -334,41 +335,19 @@
     color: white;
 }
 
-.btn--edit {
-    background: var(--primary-gradient);
-    color: white;
-    flex: 1;
-}
-
-.btn--cancel {
-    background: #e2e8f0;
-    color: #1e293b;
-}
-
-.btn--submit {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
-}
-
-.btn--submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
-}
-
 /* Card Content */
 .card-content {
-    padding: 1.5rem;
+    padding: 1rem 1.25rem 1.25rem;
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
 .card-title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: #1e293b;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     line-height: 1.3;
 }
 
@@ -386,6 +365,7 @@
 .card-meta {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 0.75rem;
     color: #94a3b8;
     margin-bottom: 0.75rem;
@@ -396,10 +376,12 @@
     padding: 0.25rem 0.75rem;
     border-radius: 6px;
     font-weight: 500;
+    color: #475569;
 }
 
 .price {
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1rem;
     color: #3b82f6;
 }
 
@@ -414,7 +396,8 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin-top: auto; /* Đẩy tags xuống dưới cùng */
+    padding-top: 0.5rem;
 }
 
 .card-tags__tag {
@@ -426,20 +409,7 @@
     font-weight: 500;
 }
 
-/* Card Actions */
-.card-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: auto;
-}
-
-.card-actions .btn {
-    padding: 0.625rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-}
-
-/* Modal */
+/* === 6. MODAL === */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -472,6 +442,10 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
 }
 
 .modal-title {
@@ -499,7 +473,7 @@
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem; /* Giảm gap một chút */
 }
 
 .modal-form__label {
@@ -507,6 +481,7 @@
     font-weight: 600;
     color: #1e293b;
     margin-bottom: 0.5rem;
+    display: block;
 }
 
 .modal-form__input,
@@ -572,9 +547,48 @@
     justify-content: flex-end;
     padding: 1.5rem;
     border-top: 1px solid #e2e8f0;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    z-index: 10;
 }
 
-/* Empty State */
+.button-huy, .button-submit, .button-cancel {
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.button-huy, .button-cancel {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+.button-huy:hover, .button-cancel:hover {
+    background: #e2e8f0;
+}
+
+.button-submit {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.button-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+.button-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* === 7. EMPTY STATE & LOADING === */
 .end-message {
     display: flex;
     flex-direction: column;
@@ -591,22 +605,21 @@
     opacity: 0.5;
 }
 
-/* Loading Overlay */
 .loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9999;
     backdrop-filter: blur(4px);
 }
 
-/* Animations */
+/* === 8. ANIMATIONS === */
 @keyframes float {
     0% { transform: translate(0, 0); }
     50% { transform: translate(20px, 30px); }
@@ -638,33 +651,73 @@
     to { opacity: 1; }
 }
 
-/* Responsive */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+
+/* === 9. RESPONSIVE === */
 @media (max-width: 768px) {
     .templates-main {
-        padding: 1rem;
+        /* Thêm padding cho bottom nav */
+        padding-bottom: 90px;
     }
 
     .stats-section {
-        margin-left: 0px;
+        margin-left: 0;
+        padding: 0 1rem;
+        /* CẬP NHẬT: margin-top sẽ được kế thừa từ 80px ở trên */
     }
 
     .controls-section {
-        margin-left: 0;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-    }
-
-    .templates-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
+        padding: 0 1rem;
     }
 
     .controls-grid {
+        margin-left: 0;
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .templates-content {
+        margin-left: 0;
+        padding: 0 1rem;
+    }
+
+    /* CẬP NHẬT: Grid 2 cột cho Stats */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .stats-card {
+        padding: 1rem;
+    }
+    .stats-card__label {
+        font-size: 0.7rem;
+    }
+    .stats-card__value {
+        font-size: 1.25rem;
+    }
+
+    /* Cập nhật chart grid */
+    /* (Inline style của bạn đã là responsive, không cần override) */
+
+    .templates-grid {
+        /* Hiển thị 1 cột trên mobile */
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .card-content {
+        padding: 1rem;
+    }
+    .card-title {
+        font-size: 1.1rem;
     }
 
     .search-input {
@@ -677,5 +730,11 @@
 
     .modal-content {
         width: 95%;
+        padding: 0; /* Cho modal form tự xử lý padding */
+    }
+
+    .modal-header, .modal-form, .modal-footer {
+        padding: 1rem;
     }
 }
+

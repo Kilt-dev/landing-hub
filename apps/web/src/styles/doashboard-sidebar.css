@@ -1,4 +1,5 @@
-
+/* === 1. PHẦN DESKTOP (NGUYÊN BẢN) === */
+/* Các style từ .sidebar đến @keyframes gentleFloat giữ nguyên */
 .sidebar {
     display: flex;
     flex-direction: column;
@@ -170,6 +171,9 @@
     position: relative;
     z-index: 10;
     overflow-y: auto;
+    /* Tùy chỉnh thanh cuộn cho đẹp hơn */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(139, 92, 246, 0.6) rgba(0, 0, 0, 0.02); /* Firefox */
 }
 
 .sidebar-item {
@@ -266,7 +270,11 @@
 .sidebar.compact .sidebar-text {
     opacity: 0;
     pointer-events: none;
+    /* Thêm transition để ẩn mượt mà */
+    transition: opacity 0.2s ease, font-size 0.2s ease;
+    font-size: 0; /* Giúp co lại mượt hơn */
 }
+
 
 /* Glow Effect */
 .sidebar-item-glow {
@@ -375,6 +383,7 @@
 /* Scrollbar */
 .sidebar-nav::-webkit-scrollbar {
     width: 6px;
+    height: 4px; /* Thêm chiều cao cho cuộn ngang */
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
@@ -383,12 +392,12 @@
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #f472b6, #8b5cf6, #3b82f6);
+    background: linear-gradient(to right, #f472b6, #8b5cf6, #3b82f6); /* Đổi sang cuộn ngang */
     border-radius: 10px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(to bottom, #ec4899, #7c3aed, #2563eb);
+    background: linear-gradient(to right, #ec4899, #7c3aed, #2563eb);
 }
 
 /* Focus states for accessibility */
@@ -413,40 +422,130 @@
     animation: gentleFloat 4s ease-in-out infinite;
 }
 
-/* Responsive Design */
+/* === 2. PHẦN RESPONSIVE CHO MOBILE (ĐÃ CẬP NHẬT) === */
 @media (max-width: 768px) {
+    
+    /* LƯU Ý QUAN TRỌNG: 
+      Vì sidebar giờ đây là thanh nav cố định bên dưới,
+      layout chính của trang (main content) cần có 
+      'padding-bottom' khoảng 90px để không bị che mất nội dung.
+      Bạn cần thêm 'padding-bottom: 90px;' vào 
+      component layout chính bọc nội dung trang.
+    */
+    
+    /* Biến sidebar thành thanh nav dưới cùng */
     .sidebar {
         width: 100%;
         height: auto;
-        margin: 10px;
-        border-radius: 16px;
-        padding: 20px;
+        position: fixed;
+        bottom: 0;
+        top: auto; /* Ghi đè top */
+        left: 0;
+        right: 0;
+        margin: 0;
+        border-radius: 20px 20px 0 0; /* Bo góc trên */
+        padding: 8px 8px 10px 8px; /* Padding mỏng hơn */
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08); /* Đổ bóng lên trên */
+        gap: 0; /* Xóa gap */
+        transition: all 0.3s ease; /* Vẫn giữ transition cho mượt */
     }
 
+    /* Đảm bảo trạng thái compact vẫn chiếm 100% chiều rộng */
     .sidebar.compact {
         width: 100%;
     }
 
-    .sidebar-nav {
-        flex-direction: row;
-        overflow-x: auto;
-        overflow-y: visible;
-        gap: 8px;
-        padding-right: 0;
-        margin-right: 0;
-    }
-
-    .sidebar-item {
-        flex-shrink: 0;
-        min-width: fit-content;
-    }
-
+    /* Ẩn các chi tiết thừa trên mobile */
+    .sidebar-bg-pattern,
+    .sidebar::before,
+    .sidebar::after,
+    .sidebar-header,
     .sidebar-footer {
         display: none;
     }
+
+    /* Chuyển nav thành hàng ngang, cho phép cuộn */
+    .sidebar-nav {
+        flex-direction: row;
+        overflow-x: auto; /* Cho phép cuộn ngang */
+        overflow-y: hidden;
+        gap: 4px;
+        align-items: flex-start; /* Căn các item lên trên */
+        padding-bottom: 2px; /* Thêm chút đệm cho bóng */
+
+        /* Ẩn thanh cuộn trên mobile cho sạch */
+        scrollbar-width: none; /* Firefox */
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+        display: none; /* Safari, Chrome */
+    }
+
+    /* Style cho TẤT CẢ item (mặc định là chỉ CÓ ICON) */
+    .sidebar-item {
+        flex-direction: column; /* Icon trên, Chữ dưới */
+        gap: 4px;
+        padding: 10px 8px; /* Padding (top/bottom) (left/right) */
+        border-radius: 12px;
+        min-width: 65px; /* Chiều rộng tối thiểu cho item CHỈ CÓ ICON */
+        justify-content: center;
+        flex-shrink: 0; /* Ngăn co lại */
+        transition: all 0.3s ease; /* Thêm transition cho min-width */
+    }
+
+    /* ẨN TẤT CẢ TEXT mặc định */
+    .sidebar-text {
+        display: none; /* ẨN */
+        font-size: 10px;
+        letter-spacing: normal;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    /* KHI .compact (từ JS), item sẽ co lại */
+    .sidebar-item.compact {
+        justify-content: center;
+        padding: 18px 8px; /* Tăng padding để icon nằm giữa */
+        min-width: 60px;
+    }
+
+    /* === THIẾT KẾ MỚI: CHỈ ACTIVE MỚI HIỆN TEXT === */
+
+    /* Khi item .active (VÀ KHÔNG .compact), NÓ SẼ RỘNG RA */
+    .sidebar-item.active {
+        min-width: 85px; /* Rộng hơn 1 chút để chứa text */
+    }
+
+    /* VÀ HIỂN THỊ TEXT LÊN */
+    .sidebar-item.active .sidebar-text {
+        display: block; /* HIỆN TEXT */
+    }
+
+    /* (Trạng thái .compact.active sẽ tự động ẩn text vì JS không render nó,
+       CSS .sidebar-item.compact ở trên sẽ xử lý padding) */
+
+
+    /* Đổi chỉ báo 'active' thành chấm/gạch bên trên */
+    .sidebar-item-indicator {
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 28px;
+        height: 3px;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 2px 5px rgba(59, 130, 246, 0.2);
+    }
+
+    .sidebar-item.compact .sidebar-item-indicator {
+        width: 20px;
+    }
 }
 
-/* Light mode specific enhancements */
+
+/* === 3. CÁC STYLE CŨ (KHÔNG ĐỔI) === */
+/* Các style này đã bị ghi đè bởi @media query ở trên,
+   nhưng để lại đây để giữ nguyên file gốc
+*/
 .sidebar-item:hover::before {
     content: '';
     position: absolute;
@@ -468,3 +567,4 @@
         opacity: 1;
     }
 }
+

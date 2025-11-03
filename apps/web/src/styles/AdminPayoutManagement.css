@@ -1,137 +1,201 @@
-/* Admin Payout Management */
+/* ============================================
+   ADMIN PAYOUT MANAGEMENT - PROFESSIONAL DESIGN
+   ============================================ */
+
+/* === 1. BIẾN MÀU VÀ CÀI ĐẶT CHUNG === */
+:root {
+    --color-dark: #1f2937;
+    --color-light: #ffffff;
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-accent: #2563eb; /* Blue */
+    --color-accent-dark: #1d4ed8;
+    --color-success: #10b981;
+    --color-success-dark: #059669;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-danger-dark: #dc2626;
+
+    /* Typography */
+    --font-serif: "Georgia", "Garamond", serif;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+
+    /* Spacing */
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+    --space-2xl: 32px;
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+    /* Radius */
+    --radius: 10px;
+
+    /* Transitions */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === 2. LAYOUT CHÍNH === */
 .admin-payout-container {
-    margin-top: 70px;
+    /* Cập nhật: Đảm bảo margin-top đủ lớn để đẩy nội dung xuống dưới Header */
+    margin-top: 70px; /* Giá trị cố định này thường là chiều cao của Header */
     display: flex;
     min-height: 100vh;
-    background: #f9fafb;
+    background: var(--color-gray-50);
 }
 
 .admin-payout-main {
     flex: 1;
-    margin-left: 250px;
+    margin-left: 250px; /* Chiều rộng Sidebar desktop */
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .admin-payout-content {
-    padding: 2rem;
+    padding: var(--space-2xl);
     max-width: 1400px;
 }
 
+/* === 3. HEADER === */
 .payout-header {
-    margin-bottom: 2.5rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid var(--color-gray-200);
 }
 
 .payout-header h1 {
-    font-family: "Inter", sans-serif; /* Dùng font hiện đại, đồng bộ */
-    font-size: 2.75rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-    letter-spacing: -1px;
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+    letter-spacing: -0.5px;
 
-    /* --- Hiệu ứng Gradient Xanh Dương - Tin cậy & Chuyên nghiệp --- */
+    /* Gradient */
     background: linear-gradient(
             90deg,
-            #2563eb, /* Blue */
+            var(--color-accent),
             #14b8a6, /* Teal */
             #22c55e, /* Green */
-            #2563eb  /* Lặp lại để animation mượt */
+            var(--color-accent)
     );
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-
-    /* --- Animation chuyển động --- */
     animation: payoutHeaderGradient 7s ease-in-out infinite;
 }
 
+@keyframes payoutHeaderGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 .payout-header p {
-    color: #4b5563; /* Màu xám đậm hơn cho dễ đọc */
+    color: var(--color-gray-500);
     font-size: 1.1rem;
     line-height: 1.6;
 }
 
-/* Stats Grid */
+/* === 4. STATS GRID === */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-2xl);
 }
 
 .stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: var(--color-light);
+    border-radius: var(--radius);
+    padding: var(--space-xl);
     display: flex;
     align-items: center;
-    gap: 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
+    gap: var(--space-lg);
+    border: 1px solid var(--color-gray-200);
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition);
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-medium);
 }
 
 .stat-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .stat-info {
     flex: 1;
+    min-width: 0; /* Cho phép text wrap */
 }
 
 .stat-value {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--color-dark);
     margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-label {
-    color: #6b7280;
-    font-size: 0.875rem;
+    color: var(--color-gray-500);
+    font-size: 0.9rem;
 }
 
-/* Filters */
+/* === 5. FILTERS === */
 .payout-filters {
-    background: white;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: var(--color-light);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+    border: 1px solid var(--color-gray-200);
+    box-shadow: var(--shadow-soft);
 }
 
 .filter-select {
-    padding: 0.75rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    min-width: 200px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    min-width: 220px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
+    background: var(--color-light);
 }
 
 .filter-select:focus {
     outline: none;
-    border-color: #f59e0b;
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Payouts Table */
+/* === 6. PAYOUTS TABLE === */
 .payouts-table {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: var(--color-light);
+    border-radius: var(--radius);
+    overflow: hidden; /* Ẩn overflow, .table-container sẽ xử lý */
+    border: 1px solid var(--color-gray-200);
+    box-shadow: var(--shadow-soft);
+}
+
+.payouts-table .table-container {
+    overflow-x: auto; /* Cho phép cuộn ngang khi cần (trên desktop hẹp) */
 }
 
 .payouts-table table {
@@ -140,20 +204,24 @@
 }
 
 .payouts-table th {
-    background: #f9fafb;
-    padding: 1rem;
+    background: var(--color-gray-50);
+    padding: var(--space-md) var(--space-lg);
     text-align: left;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: #374151;
-    border-bottom: 2px solid #e5e7eb;
+    color: var(--color-gray-500);
+    border-bottom: 1px solid var(--color-gray-200);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .payouts-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 0.875rem;
-    color: #111827;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--color-gray-100);
+    font-size: 0.9rem;
+    color: var(--color-dark);
+    white-space: nowrap;
 }
 
 .payouts-table tr:last-child td {
@@ -163,7 +231,7 @@
 .user-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-sm);
 }
 
 .user-info div {
@@ -172,54 +240,59 @@
 }
 
 .user-info small {
-    color: #6b7280;
-    font-size: 0.75rem;
+    color: var(--color-gray-500);
+    font-size: 0.8rem;
 }
 
 .status-badge-a {
     display: inline-block;
-    padding: 0.375rem 0.75rem;
+    padding: 4px 10px;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: white;
+    color: var(--color-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .action-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-sm);
 }
 
 .btn-approve,
 .btn-reject {
     padding: 0.5rem 1rem;
     border: none;
-    border-radius: 6px;
-    font-size: 0.75rem;
+    border-radius: var(--radius);
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
 }
 
 .btn-approve {
-    background: #10b981;
+    background: var(--color-success);
     color: white;
 }
 
 .btn-approve:hover {
-    background: #059669;
+    background: var(--color-success-dark);
 }
 
 .btn-reject {
-    background: #ef4444;
+    background: var(--color-danger);
     color: white;
 }
 
 .btn-reject:hover {
-    background: #dc2626;
+    background: var(--color-danger-dark);
 }
 
-/* Modal */
+/* === 7. MODAL === */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -232,22 +305,28 @@
     justify-content: center;
     z-index: 1000;
     backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal-content {
-    background: white;
-    border-radius: 16px;
+    background: var(--color-light);
+    border-radius: var(--radius);
     width: 90%;
     max-width: 500px;
-    padding: 2rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-medium);
     animation: slideUp 0.3s ease-out;
 }
 
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(50px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
@@ -256,56 +335,63 @@
 }
 
 .modal-content h2 {
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 var(--space-lg) 0;
     font-size: 1.25rem;
-    color: #111827;
+    color: var(--color-dark);
+    font-weight: 700;
 }
 
 .modal-info {
-    background: #f9fafb;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+    background: var(--color-gray-50);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
 }
 
 .modal-info p {
     margin: 0.5rem 0;
-    font-size: 0.875rem;
-    color: #374151;
+    font-size: 0.9rem;
+    color: var(--color-gray-500);
+}
+
+.modal-info p strong {
+    color: var(--color-dark);
+    font-weight: 600;
 }
 
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-lg);
 }
 
 .form-group label {
     display: block;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.5rem;
+    color: var(--color-dark);
+    margin-bottom: var(--space-sm);
 }
 
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 0.75rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    transition: all 0.2s;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    transition: var(--transition);
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #f59e0b;
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .modal-actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--space-md);
     justify-content: flex-end;
 }
 
@@ -313,73 +399,75 @@
 .btn-confirm,
 .btn-danger {
     padding: 0.75rem 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: var(--transition);
     border: none;
 }
 
 .btn-cancel {
-    background: #f3f4f6;
-    color: #374151;
+    background: var(--color-gray-100);
+    color: var(--color-dark);
 }
 
 .btn-cancel:hover {
-    background: #e5e7eb;
+    background: var(--color-gray-200);
 }
 
 .btn-confirm {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
+    background: var(--color-success);
+    color: var(--color-light);
 }
 
 .btn-confirm:hover {
+    background: var(--color-success-dark);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
+    background: var(--color-danger);
+    color: var(--color-light);
 }
 
 .btn-danger:hover {
+    background: var(--color-danger-dark);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
-/* Empty State */
+/* === 8. EMPTY STATE & PAGINATION === */
 .empty-state {
     text-align: center;
     padding: 3rem;
-    color: #6b7280;
+    color: var(--color-gray-500);
 }
 
-/* Pagination */
 .pagination {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e5e7eb;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--color-gray-200);
 }
 
 .pagination button {
-    padding: 0.5rem 1rem;
-    border: 1px solid #e5e7eb;
-    background: white;
-    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--color-gray-300);
+    background: var(--color-light);
+    border-radius: var(--radius);
     cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.875rem;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 .pagination button:hover:not(:disabled) {
-    background: #f9fafb;
+    background: var(--color-gray-100);
 }
 
 .pagination button:disabled {
@@ -387,32 +475,108 @@
     cursor: not-allowed;
 }
 
-/* Responsive */
+/* === 9. RESPONSIVE === */
 @media (max-width: 1024px) {
     .admin-payout-main {
-        margin-left: 80px;
+        margin-left: 80px; /* Chiều rộng Sidebar compact */
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
     .admin-payout-main {
         margin-left: 0;
+        padding-bottom: 90px; /* Thêm padding cho bottom nav */
     }
 
     .admin-payout-content {
-        padding: 1rem;
+        padding: var(--space-lg);
+    }
+
+    .payout-header h1 {
+        font-size: 2rem;
+    }
+
+    /* CẬP NHẬT: Luôn luôn là 2 cột trên thiết bị nhỏ */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr; /* 2 cột trên tablet & mobile */
+        gap: var(--space-md);
+    }
+
+    .stat-card {
+        padding: var(--space-lg);
+        /* CẬP NHẬT: Xếp chồng icon và text cho gọn */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
     }
 
     .payouts-table {
-        overflow-x: auto;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .payouts-table .table-container {
+        /* Xóa cuộn ngang và các hiệu ứng liên quan */
+        overflow-x: visible;
+        border: none;
+        box-shadow: none;
+        position: relative;
+        -webkit-mask-image: none;
+        mask-image: none;
     }
 
     .payouts-table table {
-        min-width: 800px;
+        min-width: auto; /* Cho phép bảng co lại */
+        width: 100%;
     }
 
+    /* CẬP NHẬT: Ẩn các cột không quan trọng */
+    .payouts-table th:nth-child(2),
+    .payouts-table td:nth-child(2), /* Ngân hàng */
+    .payouts-table th:nth-child(3),
+    .payouts-table td:nth-child(3), /* STK */
+    .payouts-table th:nth-child(4),
+    .payouts-table td:nth-child(4), /* Tên TK */
+    .payouts-table th:nth-child(6),
+    .payouts-table td:nth-child(6) { /* Ngày yêu cầu */
+        display: none;
+    }
+
+    /* CẬP NHẬT: Điều chỉnh padding và font cho các cột còn lại */
+    .payouts-table th,
+    .payouts-table td {
+        padding: var(--space-md) var(--space-sm);
+        font-size: 0.85rem; /* Giảm font */
+        white-space: normal; /* Cho phép text xuống hàng */
+    }
+
+    .payouts-table td {
+        /* Đảm bảo nội dung căn giữa chiều dọc */
+        vertical-align: middle;
+    }
+
+    /* CẬP NHẬT: Xếp chồng các nút */
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn-approve,
+    .btn-reject {
+        padding: 0.75rem 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    /* CẬP NHẬT: Đảm bảo 2 cột stats-grid */
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr; /* 2 cột trên mobile */
+        gap: var(--space-md);
     }
 
     .modal-actions {
@@ -424,4 +588,17 @@
     .btn-danger {
         width: 100%;
     }
+
+    /* CẬP NHẬT: Tinh chỉnh cho màn hình siêu nhỏ */
+    .payouts-table th,
+    .payouts-table td {
+        padding: var(--space-md) 4px; /* Giảm padding siêu nhỏ */
+        font-size: 0.8rem;
+    }
+
+    .status-badge-a {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+    }
 }
+

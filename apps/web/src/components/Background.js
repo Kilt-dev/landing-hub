@@ -1,5 +1,6 @@
 import React from 'react';
 import '../styles/Background.css';
+
 import logo from '../assets/logo.png'
 import { Link } from "react-router-dom";
 
@@ -32,6 +33,11 @@ const Background = ({ children, fullWidth = false }) => {
                             className="logo-image"
                         />
                     </div>
+                       <div className="menu-toggle" onClick={() => document.body.classList.toggle('menu-open')}>
+                         <span></span>
+                         <span></span>
+                         <span></span>
+                       </div>
 
                     {/* Menu Items */}
                     <div className="menu-items">
