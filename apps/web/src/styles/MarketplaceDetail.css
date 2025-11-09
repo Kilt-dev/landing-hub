@@ -85,12 +85,37 @@
     border: 1px solid var(--color-border);
     margin-bottom: var(--space-lg);
 }
+
+/* ⭐ START SỬA: ĐÂY LÀ STYLE BAN ĐẦU CỦA ẢNH */
 .detail-left .main-image img {
     width: 100%;
-    height: 400px;
+    height: 400px; /* Bạn có thể giữ nguyên hoặc thay đổi chiều cao này */
     object-fit: cover;
     display: block;
+    object-position: top; /* 1. Trạng thái ban đầu: Hiển thị ĐẦU ảnh */
+
+    /* 2. Hiệu ứng cuộn lên nhanh (0.5s) khi bỏ hover + hiệu ứng zoom */
+    transition: object-position 0.5s ease-out, transform 0.4s ease;
 }
+/* ⭐ END SỬA */
+
+
+/* ⭐ START THÊM: ĐÂY LÀ STYLE HOVER (ĐÃ DI CHUYỂN RA NGOÀI) */
+/* Chỉ áp dụng hiệu ứng TRƯỢT cho ảnh có class .scrollable-image */
+.detail-left .main-image:hover img.scrollable-image {
+    transform: scale(1.08); /* Vẫn giữ zoom */
+    object-position: bottom;
+    /* Thời gian cuộn 7s */
+    transition: object-position 7s ease-in-out, transform 0.4s ease;
+}
+
+/* Áp dụng hiệu ứng ZOOM cho các ảnh tĩnh (không có class .scrollable-image) */
+.detail-left .main-image:hover img:not(.scrollable-image) {
+    transform: scale(1.08);
+    transition: transform 0.4s ease;
+}
+/* ⭐ END THÊM */
+
 
 /* Thống nhất kích thước thumbnail với Marketplace */
 .thumbnail-gallery {
@@ -377,6 +402,27 @@
     cursor: not-allowed;
 }
 
+/* CSS cho nút "Xem chi tiết đơn hàng" - Thêm vào nếu chưa có */
+.download-options .btn-secondary {
+    background-color: #f1f1f1;
+    color: var(--color-text-body);
+    border: 1px solid var(--color-border);
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition);
+}
+.download-options .btn-secondary:hover {
+    background-color: #e9e9e9;
+    border-color: #ddd;
+}
+
+
 .payment-method {
     padding: var(--space-md);
     border: 1px solid var(--color-border);
@@ -474,9 +520,11 @@
     .detail-right {
         position: static;
     }
-    .detail-left .main-image img {
-        height: 300px;
-    }
+
+    /* ⭐ START SỬA: XÓA KHỐI HOVER BỊ LỖI Ở ĐÂY */
+    /* (Đã xóa khối .detail-left .main-image:hover img ở đây) */
+    /* ⭐ END SỬA */
+
     .action-buttons-secondary {
         grid-template-columns: 1fr;
     }
@@ -534,3 +582,79 @@
 .review-comment { margin-top: 6px; color: #333; }
 .stars { color: #ffc107; }
 .stars svg { margin-right: 2px; }
+
+/* Thêm CSS cho phần review box (nếu chưa có) */
+.review-box {
+    background: var(--color-bg-container);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    margin-top: var(--space-xl);
+}
+.review-box h4 {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    color: var(--color-text-header);
+    margin-bottom: var(--space-md);
+}
+.review-box .stars {
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-bottom: var(--space-md);
+}
+.review-box .stars svg {
+    color: #e0e0e0; /* Màu sao mặc định */
+    transition: color 0.2s;
+}
+.review-box .stars svg.filled {
+    color: #ffc107; /* Màu sao đã chọn */
+}
+.review-box textarea {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-md);
+}
+.review-box button {
+    padding: 10px 20px;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+}
+.review-box button:hover {
+    background-color: #b9a589;
+}
+.review-box button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Thêm CSS cho nút Yêu cầu hoàn tiền (nếu chưa có) */
+.btn-danger {
+    background: var(--color-danger);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition);
+}
+.btn-danger:hover {
+    background: #dc2626;
+}
+.btn-danger:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

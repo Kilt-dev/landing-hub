@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext, useMemo } from "react" // <-- Thêm useMemo
 import { UserContext } from "../context/UserContext"
 import Header from "../components/Header"
 import Sidebar from "../components/Sidebar"
@@ -46,7 +46,7 @@ const MarketplaceDetail = () => {
     const [downloading, setDownloading] = useState(false)
     const [order, setOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
-    const hasPurchased = Boolean(order);   // thay vì state riêng
+    const hasPurchased = Boolean(order);
     const navigate = useNavigate()
     const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
     const [rating, setRating] = useState(0);
@@ -55,7 +55,6 @@ const MarketplaceDetail = () => {
     const [refunding, setRefunding] = useState(false);
     const [reviews, setReviews] = useState([]);
     const [refundReason, setRefundReason] = useState('');
-    const [refundStatus, setRefundStatus] = useState(null); // 'pending', 'approved', 'rejected'
     const statusVn = {
         pending: 'Chờ xác nhận',
         processing: 'Đang xử lý',
@@ -63,6 +62,10 @@ const MarketplaceDetail = () => {
         refunded: 'Đã hoàn tiền',
         cancelled: 'Đã hủy',
     };
+
+    // (Các hàm loadReviews, handleRequestRefund... giữ nguyên)
+    // ...
+    // START GIỮ NGUYÊN
     const loadReviews = async () => {
         try {
             const res = await axios.get(`${API_BASE_URL}/api/marketplace/${id}/reviews`);
@@ -82,7 +85,7 @@ const MarketplaceDetail = () => {
         socket.on('order_refunded', (data) => {
             if (data.orderId === order.orderId) {
                 toast.success('Đơn hàng đã được hoàn tiền!');
-                loadPageDetail();          // reload
+                loadPageDetail();
             }
         });
         return () => socket.disconnect();
@@ -100,7 +103,7 @@ const MarketplaceDetail = () => {
         setRefunding(true);
         try {
             await axios.patch(
-                `${API_BASE_URL}/api/orders/${orderId}/refund`,   // ← không có /request-refund
+                `${API_BASE_URL}/api/orders/${order.orderId}/refund`, // Sửa: Dùng order.orderId
                 { reason: refundReason },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
             );
@@ -150,9 +153,9 @@ const MarketplaceDetail = () => {
 
             const payload = res.data.data;
             setPage(payload);
-            setOrder(payload.order || null);          // ✅
-            setIsSeller(payload.isSeller || false);   // ✅
-            setIsLiked(payload.liked || false);       // ✅
+            setOrder(payload.order || null);
+            setIsSeller(payload.isSeller || false);
+            setIsLiked(payload.liked || false);
         } catch (err) {
             setError(err.response?.data?.message || err.message);
         } finally {
@@ -171,9 +174,8 @@ const MarketplaceDetail = () => {
             toast.success('Cảm ơn bạn đã đánh giá!');
             setRating(0);
             setComment('');
-            // ⬇️ reload dữ liệu mới nhất
-            await loadPageDetail(); // rating, review_count mới
-            await loadReviews();    // danh sách review mới
+            await loadPageDetail();
+            await loadReviews();
         } catch (e) {
             toast.error(e.response?.data?.message || 'Không gửi được đánh giá');
         } finally {
@@ -265,6 +267,29 @@ const MarketplaceDetail = () => {
     const calculateDiscount = (price, originalPrice) =>
         !originalPrice || originalPrice <= price ? 0 : Math.round(((originalPrice - price) / originalPrice) * 100)
 
+    // END GIỮ NGUYÊN
+
+    // ⭐ START SỬA: TẠO MỘT MẢNG ẢNH HIỂN THỊ THỐNG NHẤT
+    const displayImages = useMemo(() => {
+        if (!page) return [];
+
+        // Lấy mảng screenshots, loại bỏ các giá trị null/undefined/rỗng
+        const otherScreenshots = (page.screenshots || []).filter(ss => ss);
+
+        // Nếu main_screenshot đã có trong mảng kia, chỉ trả về mảng đó
+        if (otherScreenshots.includes(page.main_screenshot)) {
+            return otherScreenshots;
+        }
+
+        // Nếu main_screenshot chưa có, thêm nó vào đầu mảng
+        const allImages = [page.main_screenshot, ...otherScreenshots].filter(ss => ss);
+
+        // Loại bỏ trùng lặp (nếu có)
+        return [...new Set(allImages)];
+
+    }, [page]);
+    // ⭐ END SỬA
+
     if (loading) return <DogLoader />
     if (error)
         return (
@@ -299,18 +324,25 @@ const MarketplaceDetail = () => {
                     <div className="detail-grid">
                         <div className="detail-left" data-aos="fade-right">
                             <div className="main-image">
+
+                                {/* ⭐ START SỬA: Sửa logic src và thêm className */}
                                 <img
                                     src={
-                                        (page.screenshots && page.screenshots[currentImageIndex]) ||
-                                        page.main_screenshot ||
+                                        displayImages[currentImageIndex] ||
                                         "/placeholder.png"
                                     }
                                     alt={page.title}
+                                    // Thêm class 'scrollable-image' NẾU đây là ảnh đầu tiên (ảnh main)
+                                    className={currentImageIndex === 0 ? "scrollable-image" : ""}
                                 />
+                                {/* ⭐ END SỬA */}
+
                             </div>
-                            {page.screenshots && page.screenshots.length > 1 && (
+
+                            {/* ⭐ START SỬA: Dùng mảng displayImages cho thumbnail gallery */}
+                            {displayImages && displayImages.length > 1 && (
                                 <div className="thumbnail-gallery">
-                                    {page.screenshots.map((ss, i) => (
+                                    {displayImages.map((ss, i) => (
                                         <div
                                             key={i}
                                             className={`thumbnail ${i === currentImageIndex ? "active" : ""}`}
@@ -321,6 +353,8 @@ const MarketplaceDetail = () => {
                                     ))}
                                 </div>
                             )}
+                            {/* ⭐ END SỬA */}
+
                             <div className="info-section description-section">
                                 <h3>
                                     <FiFileText /> Mô tả chi tiết
@@ -330,27 +364,29 @@ const MarketplaceDetail = () => {
                         </div>
 
                         <div className="detail-right" data-aos="fade-left">
+                           {/* ... (Toàn bộ phần code của cột phải giữ nguyên) ... */}
+                           {/* START GIỮ NGUYÊN */}
                             <div className="detail-header">
                                 <div className="category-badge">{page.category}</div>
                                 <h1>{page.title}</h1>
                                 <div className="meta-info">
                                     <span>
-    <FiStar /> {page.rating.toFixed(1)} ({page.review_count} đánh giá)
-  </span>
-                  <span>
-                    <FiEye /> {page.views}
-                  </span>
+                                        <FiStar /> {page.rating.toFixed(1)} ({page.review_count} đánh giá)
+                                    </span>
                                     <span>
-                    <FiShoppingCart /> {page.sold_count}
-                  </span>
+                                        <FiEye /> {page.views}
+                                    </span>
                                     <span>
-                    <FiStar /> {page.rating.toFixed(1)}
-                  </span>
+                                        <FiShoppingCart /> {page.sold_count}
+                                    </span>
+                                    <span>
+                                        <FiStar /> {page.rating.toFixed(1)}
+                                    </span>
                                 </div>
                                 <div className="seller-info">
-                  <span>
-                    <FiUser /> Bán bởi: <strong>{page.seller_id?.name || "Anonymous"}</strong>
-                  </span>
+                                    <span>
+                                        <FiUser /> Bán bởi: <strong>{page.seller_id?.name || "Anonymous"}</strong>
+                                    </span>
                                 </div>
                             </div>
                             <div className="price-section">
@@ -381,8 +417,8 @@ const MarketplaceDetail = () => {
                                     <div className="tags">
                                         {page.tags.map((tag, i) => (
                                             <span key={i} className="tag">
-                        {tag}
-                      </span>
+                                                {tag}
+                                            </span>
                                         ))}
                                     </div>
                                 </div>
@@ -434,8 +470,12 @@ const MarketplaceDetail = () => {
                                     </div>
                                 </div>
                             )}
+                            {/* END GIỮ NGUYÊN */}
                         </div>
                     </div>
+
+                    {/* ... (Toàn bộ phần code review, features... giữ nguyên) ... */}
+                    {/* START GIỮ NGUYÊN */}
                     {reviews.length > 0 && (
                         <div className="review-list">
                             <h4>Đánh giá từ khách hàng</h4>
@@ -444,8 +484,8 @@ const MarketplaceDetail = () => {
                                     <div className="review-head">
                                         <strong>{r.buyerId?.name || 'Ẩn danh'}</strong>
                                         <span className="review-date">
-            {new Date(r.createdAt).toLocaleDateString('vi-VN')}
-          </span>
+                                            {new Date(r.createdAt).toLocaleDateString('vi-VN')}
+                                        </span>
                                     </div>
                                     <div className="stars">
                                         {[1, 2, 3, 4, 5].map((s) => (
@@ -512,8 +552,12 @@ const MarketplaceDetail = () => {
                             </div>
                         </div>
                     </div>
+                    {/* END GIỮ NGUYÊN */}
                 </div>
             </div>
+
+            {/* ... (Phần Modal giữ nguyên) ... */}
+            {/* START GIỮ NGUYÊN */}
             {showOrderModal && order && (
                 <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -528,8 +572,8 @@ const MarketplaceDetail = () => {
                             <p><strong>Ngày mua:</strong> {new Date(order.createdAt).toLocaleDateString("vi-VN")}</p>
                             <p><strong>Trạng thái:</strong>
                                 <span className={`status ${order.status}`}>
-    {statusVn[order.status] || order.status}
-  </span>
+                                    {statusVn[order.status] || order.status}
+                                </span>
                             </p>
                             <p><strong>Tổng tiền:</strong> {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(order.price)}</p>
                             {order.status === 'delivered' && (
@@ -550,12 +594,9 @@ const MarketplaceDetail = () => {
                     </div>
                 </div>
             )}
+            {/* END GIỮ NGUYÊN */}
         </div>
-
     )
-
 }
-
-
 
 export default MarketplaceDetail

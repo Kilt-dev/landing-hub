@@ -336,12 +336,29 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+
+    /* --- BẮT ĐẦU SỬA --- */
+    /* 1. Bắt đầu từ ĐẦU ảnh */
+    object-position: top;
+
+    /* 2. Hiệu ứng cuộn lên nhanh (0.5s) khi bỏ hover */
+    transition: object-position 0.5s ease-out, transform 0.4s ease;
+    /* --- KẾT THÚC SỬA --- */
 }
 
 .marketplace-card:hover .card-image img,
 .featured-card:hover .featured-image img {
+
+    /* --- BẮT ĐẦU SỬA --- */
+    /* 1. Vẫn giữ hiệu ứng zoom đẹp mắt của bạn */
     transform: scale(1.08);
+
+    /* 2. Di chuyển ảnh đến CUỐI ảnh */
+    object-position: bottom;
+
+    /* 3. Hiệu ứng cuộn xuống chậm (7s) khi hover */
+    transition: object-position 7s ease-in-out, transform 0.4s ease;
+    /* --- KẾT THÚC SỬA --- */
 }
 
 /* --- BADGES --- */
