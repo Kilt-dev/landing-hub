@@ -6,6 +6,19 @@
 /**
  * Tính scale factor giữa các view modes
  */
+export const RESPONSIVE_DATA_KEYS = [
+    'content',
+    'animation',
+    'title',
+    'overlayColor',
+    'overlayOpacity',
+    'backgroundType',
+    'rotate',
+    'scale',
+    'hoverZoom',
+    'hoverRotate',
+    'hoverGrayscale'
+];
 export const getScaleFactor = (fromMode, toMode) => {
     const widths = {
         desktop: 1200,
@@ -295,12 +308,17 @@ export const syncElementBetweenModes = (element, changedMode) => {
 /**
  * Sync toàn bộ pageData khi chuyển view mode
  */
-export const syncAllElements = (pageData, currentMode) => {
+export const syncAllElements = (pageData) => {
+    if (!pageData || !pageData.elements) return pageData;
     return {
         ...pageData,
-        elements: pageData.elements.map(element =>
-            syncElementBetweenModes(element, currentMode)
-        )
+        elements: pageData.elements.map(element => {
+            const newElement = initializeResponsiveData(element);
+            if (newElement.children && newElement.children.length > 0) {
+                newElement.children = newElement.children.map(child => initializeResponsiveData(child));
+            }
+            return newElement;
+        })
     };
 };
 
@@ -308,68 +326,102 @@ export const syncAllElements = (pageData, currentMode) => {
  * Get responsive values dựa trên viewMode hiện tại
  */
 export const getResponsiveValues = (element, viewMode) => {
-    const baseSize = element.size || { width: element.type === 'section' ? 1200 : 200, height: 400 };
-    const basePosition = element.position?.desktop || { x: 0, y: 0, z: 1 };
-    const baseStyles = element.styles || {};
-    const baseComponentData = element.componentData || {};
+    // 1. Lấy giá trị Desktop làm nền tảng (luôn luôn)
+    const baseSize = element.size?.desktop || element.size || { width: 200, height: 50 };
+    const basePosition = element.position?.desktop || element.position || { x: 0, y: 0, z: 1 };
+    const baseStyles = element.styles?.desktop || element.styles || {};
 
-    let size = baseSize;
-    let position = basePosition;
-    let styles = baseStyles;
-    let componentData = baseComponentData;
+    // 2. Xử lý Component Data (Quan trọng)
+    // Bắt đầu với TẤT CẢ data global (không nằm trong các bucket desktop/tablet/mobile)
+    const globalComponentData = { ...element.componentData };
+    delete globalComponentData.desktop;
+    delete globalComponentData.tablet;
+    delete globalComponentData.mobile;
 
-    switch (viewMode) {
-        case 'tablet':
-            size = element.tabletSize || baseSize;
-            position = element.position?.tablet || basePosition;
-            styles = element.responsiveStyles?.tablet
-                ? { ...baseStyles, ...element.responsiveStyles.tablet }
-                : baseStyles;
-            componentData = element.tabletComponentData
-                ? { ...baseComponentData, ...element.tabletComponentData }
-                : baseComponentData;
-            break;
+    // Lấy data responsive nền (desktop)
+    const baseResponsiveComponentData = element.componentData?.desktop || {};
 
-        case 'mobile':
-            size = element.mobileSize || element.tabletSize || baseSize;
-            position = element.position?.mobile || basePosition;
-            styles = element.responsiveStyles?.mobile
-                ? { ...baseStyles, ...element.responsiveStyles.tablet, ...element.responsiveStyles.mobile }
-                : baseStyles;
-            componentData = element.mobileComponentData
-                ? { ...baseComponentData, ...element.tabletComponentData, ...element.mobileComponentData }
-                : baseComponentData;
-            break;
+    // Merge global + desktop
+    let responsiveComponentData = { ...globalComponentData, ...baseResponsiveComponentData };
+    let responsiveSize = { ...baseSize };
+    let responsivePosition = { ...basePosition };
+    let responsiveStyles = { ...baseStyles };
 
-        default:
-            break;
+    // 3. Nếu là Tablet, đè giá trị Tablet lên Desktop
+    if (viewMode === 'tablet') {
+        responsiveSize = { ...responsiveSize, ...(element.size?.tablet || {}) };
+        responsivePosition = { ...responsivePosition, ...(element.position?.tablet || {}) };
+        responsiveStyles = { ...responsiveStyles, ...(element.styles?.tablet || {}) };
+        responsiveComponentData = { ...responsiveComponentData, ...(element.componentData?.tablet || {}) };
     }
 
+    // 4. Nếu là Mobile, đè giá trị Mobile lên (Desktop -> Tablet)
+    if (viewMode === 'mobile') {
+        responsiveSize = { ...responsiveSize, ...(element.size?.tablet || {}), ...(element.size?.mobile || {}) };
+        responsivePosition = { ...responsivePosition, ...(element.position?.tablet || {}), ...(element.position?.mobile || {}) };
+        responsiveStyles = { ...responsiveStyles, ...(element.styles?.tablet || {}), ...(element.styles?.mobile || {}) };
+        responsiveComponentData = { ...responsiveComponentData, ...(element.componentData?.tablet || {}), ...(element.componentData?.mobile || {}) };
+    }
+
+    // 5. Trả về bộ giá trị cuối cùng cho viewMode này
     return {
-        id: element.id,
-        type: element.type,
-        size,
-        position,
-        styles,
-        componentData,
-        children: element.children || [],
-        visible: element.visible !== false,
+        size: responsiveSize,
+        position: responsivePosition,
+        styles: responsiveStyles,
+        componentData: responsiveComponentData,
     };
 };
 
 /**
  * Initialize responsive data cho elements chưa có
  */
-export const initializeResponsiveData = (pageData) => {
-    return {
-        ...pageData,
-        elements: pageData.elements.map(element => {
-            // Nếu chưa có responsive data, tạo mới
-            if (!element.position?.mobile || !element.position?.tablet) {
-                return syncElementBetweenModes(element, 'desktop');
+export const initializeResponsiveData = (element) => {
+    // Nếu đã có cấu trúc chuẩn, bỏ qua
+    if (element.size?.desktop && element.position?.desktop && element.styles?.desktop) {
+        return element;
+    }
+
+    // Tách riêng data global và data responsive
+    const globalData = {};
+    const responsiveData = {};
+
+    if (element.componentData) {
+        for (const key in element.componentData) {
+            if (RESPONSIVE_DATA_KEYS.includes(key)) {
+                responsiveData[key] = element.componentData[key];
+            } else {
+                globalData[key] = element.componentData[key];
             }
-            return element;
-        })
+        }
+    }
+
+    const baseSize = element.size?.desktop || element.size || { width: 200, height: 50 };
+    const basePosition = element.position?.desktop || element.position || { x: 0, y: 0, z: 1 };
+    const baseStyles = element.styles?.desktop || element.styles || {};
+
+    return {
+        ...element,
+        size: {
+            desktop: baseSize,
+            tablet: element.size?.tablet || {},
+            mobile: element.size?.mobile || {},
+        },
+        position: {
+            desktop: basePosition,
+            tablet: element.position?.tablet || {},
+            mobile: element.position?.mobile || {},
+        },
+        styles: {
+            desktop: baseStyles,
+            tablet: element.styles?.tablet || {},
+            mobile: element.styles?.mobile || {},
+        },
+        componentData: {
+            ...globalData, // Data global (src, events, images...)
+            desktop: { ...responsiveData, ...(element.componentData?.desktop || {}) }, // Data responsive
+            tablet: element.componentData?.tablet || {},
+            mobile: element.componentData?.mobile || {},
+        }
     };
 };
 

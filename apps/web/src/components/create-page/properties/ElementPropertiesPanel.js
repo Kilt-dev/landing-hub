@@ -8,6 +8,7 @@ import {
 import { toast } from 'react-toastify';
 import ImageManagerModal from '../ImageManagerModal'; // Adjust path if needed
 import '../../../styles/ElementPropertiesPanel.css';
+import { getResponsiveValues, RESPONSIVE_DATA_KEYS } from '../../../utils/responsiveSync';
 
 const FONT_PRESETS = [
     { name: 'Arial', value: 'Arial, sans-serif' },
@@ -101,7 +102,7 @@ const GRADIENT_PRESETS = [
     { name: 'Cầu vồng', value: 'linear-gradient(90deg, #667eea, #764ba2, #f093fb, #4facfe)' }
 ];
 
-const ElementPropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed, onToggle, pageId }) => {
+const ElementPropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed, onToggle, pageId, viewMode }) => {
     const [activeTab, setActiveTab] = useState('design');
     const [showImageEditor, setShowImageEditor] = useState(true);
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -134,7 +135,13 @@ const ElementPropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed,
         );
     }
 
-    const { type, componentData = {}, styles = {}, size = {} } = selectedElement.json;
+    const { type } = selectedElement.json;
+        const {
+            size: responsiveSize,
+            styles: responsiveStyles,
+            componentData: responsiveComponentData
+        } = getResponsiveValues(selectedElement.json, viewMode);
+
     const isHeading = type === 'heading';
     const isParagraph = type === 'paragraph';
     const isGallery = type === 'gallery';
@@ -153,90 +160,111 @@ const ElementPropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed,
     }
 
     const handleStyleChange = (property, value) => {
-        const updated = {
-            ...selectedElement,
-            json: {
-                ...selectedElement.json,
-                styles: {
-                    ...styles,
-                    [property]: value,
+            const currentViewStyles = selectedElement.json.styles?.[viewMode] || selectedElement.json.styles?.desktop || {};
+            const updated = {
+                ...selectedElement,
+                json: {
+                    ...selectedElement.json,
+                    styles: {
+                        ...selectedElement.json.styles,
+                        [viewMode]: {
+                            ...currentViewStyles,
+                            [property]: value,
+                        },
+                    },
                 },
-            },
+            };
+            onUpdateElement(updated);
         };
-        onUpdateElement(updated);
-    };
 
     const handleComponentDataChange = (key, value) => {
-        const updated = {
-            ...selectedElement,
-            json: {
-                ...selectedElement.json,
-                componentData: {
-                    ...componentData,
-                    [key]: value,
+            let updatedComponentData;
+
+            if (RESPONSIVE_DATA_KEYS.includes(key)) {
+                // Đây là data responsive, lưu vào [viewMode]
+                const currentViewData = selectedElement.json.componentData?.[viewMode] || selectedElement.json.componentData?.desktop || {};
+                updatedComponentData = {
+                    ...selectedElement.json.componentData,
+                    [viewMode]: {
+                        ...currentViewData,
+                        [key]: value
+                    }
+                };
+            } else {
+                // Đây là data global (như 'images'), lưu vào gốc
+                updatedComponentData = {
+                    ...selectedElement.json.componentData,
+                    [key]: value
+                };
+            }
+
+            const updated = {
+                ...selectedElement,
+                json: {
+                    ...selectedElement.json,
+                    componentData: updatedComponentData,
                 },
-            },
+            };
+            onUpdateElement(updated);
         };
-        onUpdateElement(updated);
-    };
 
     const handleSizeChange = (dimension, value) => {
-        const parsedValue = parseInt(value);
-        if (isNaN(parsedValue) || parsedValue < 0) {
-            toast.error('Kích thước phải là số dương');
-            return;
-        }
-        const updated = {
-            ...selectedElement,
-            json: {
-                ...selectedElement.json,
-                size: {
-                    ...size,
-                    [dimension]: parsedValue,
+            const parsedValue = parseInt(value);
+            if (isNaN(parsedValue) || parsedValue < 0) {
+                toast.error('Kích thước phải là số dương');
+                return;
+            }
+            const currentViewSize = selectedElement.json.size?.[viewMode] || selectedElement.json.size?.desktop || {};
+            const updated = {
+                ...selectedElement,
+                json: {
+                    ...selectedElement.json,
+                    size: {
+                        ...selectedElement.json.size,
+                        [viewMode]: {
+                            ...currentViewSize,
+                            [dimension]: parsedValue,
+                        },
+                    },
                 },
-            },
+            };
+            onUpdateElement(updated);
         };
-        onUpdateElement(updated);
-    };
 
     const toggleFontStyle = (property, value) => {
-        const currentValue = styles[property];
-        handleStyleChange(property, currentValue === value ? 'normal' : value);
-    };
+            const currentValue = responsiveStyles[property]; // Đọc từ responsiveStyles
+            handleStyleChange(property, currentValue === value ? 'normal' : value);
+        };
 
     const applyGradientText = (gradient) => {
-        if (gradient) {
-            handleStyleChange('background', gradient);
-            handleStyleChange('WebkitBackgroundClip', 'text');
-            handleStyleChange('WebkitTextFillColor', 'transparent');
-        } else {
-            handleStyleChange('background', 'transparent');
-            handleStyleChange('WebkitBackgroundClip', 'initial');
-            handleStyleChange('WebkitTextFillColor', 'initial');
-        }
-    };
+            if (gradient) {
+                handleStyleChange('background', gradient);
+                handleStyleChange('WebkitBackgroundClip', 'text');
+                handleStyleChange('WebkitTextFillColor', 'transparent');
+            } else {
+                handleStyleChange('background', 'transparent');
+                handleStyleChange('WebkitBackgroundClip', 'initial');
+                handleStyleChange('WebkitTextFillColor', 'initial');
+            }
+        };
 
     const handleImageSelect = (image) => {
-        if (!image?.url) {
-            toast.error('URL ảnh không hợp lệ');
-            return;
-        }
-        const isValidUrl = /^https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp)$/i.test(image.url);
-        if (!isValidUrl) {
-            toast.error('URL phải là định dạng ảnh hợp lệ (png, jpg, jpeg, gif, webp)');
-            return;
-        }
-        const newImages = [...(componentData.images || []), image.url];
-        handleComponentDataChange('images', newImages);
-        toast.success('Đã thêm ảnh vào thư viện!');
-        setShowUploadModal(false);
-    };
+            if (!image?.url) { /* ... */ return; }
+            const isValidUrl = /^https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp)$/i.test(image.url);
+            if (!isValidUrl) { /* ... */ return; }
+            // Đọc từ data global
+            const newImages = [...(selectedElement.json.componentData.images || []), image.url];
+            handleComponentDataChange('images', newImages);
+            toast.success('Đã thêm ảnh vào thư viện!');
+            setShowUploadModal(false);
+        };
 
-    const handleImageRemove = (index) => {
-        const newImages = (componentData.images || []).filter((_, i) => i !== index);
-        handleComponentDataChange('images', newImages);
-        toast.success('Đã xóa ảnh khỏi thư viện!');
-    };
+        const handleImageRemove = (index) => {
+            // Đọc từ data global
+            const newImages = (selectedElement.json.componentData.images || []).filter((_, i) => i !== index);
+            handleComponentDataChange('images', newImages);
+            toast.success('Đã xóa ảnh khỏi thư viện!');
+        };
 
     const handleFileSelect = async (e) => {
         const files = Array.from(e.target.files);

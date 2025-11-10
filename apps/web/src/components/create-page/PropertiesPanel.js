@@ -54,7 +54,7 @@ const PADDING_PRESETS = [
     { name: 'Lớn', value: '24px' }
 ];
 
-const PropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed, onToggle, pageId }) => {
+const PropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed, onToggle, pageId,viewMode }) => {
     const [activeTab, setActiveTab] = useState('design');
     const [imagePreview, setImagePreview] = useState(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -96,13 +96,19 @@ const PropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed, onTogg
     const { type, componentData = {}, styles = {}, size = {}, position = {} } = selectedElement.json;
 
     const handleStyleChange = (property, value) => {
+        // Lấy style nền của viewMode này (hoặc kế thừa từ desktop)
+        const currentViewStyles = selectedElement.json.styles?.[viewMode] || selectedElement.json.styles?.desktop || {};
+
         const updated = {
             ...selectedElement,
             json: {
                 ...selectedElement.json,
                 styles: {
                     ...selectedElement.json.styles,
-                    [property]: value,
+                    [viewMode]: { // <-- Chỉ cập nhật cho viewMode hiện tại
+                        ...currentViewStyles,
+                        [property]: value,
+                    }
                 },
             },
         };
@@ -125,17 +131,20 @@ const PropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed, onTogg
 
     const handleSizeChange = (dimension, value) => {
         const parsedValue = parseInt(value);
-        if (isNaN(parsedValue) || parsedValue < 0) {
-            toast.error('Kích thước phải là số dương');
-            return;
-        }
+        // ...
+        // Lấy size nền của viewMode này (hoặc kế thừa từ desktop)
+        const currentViewSize = selectedElement.json.size?.[viewMode] || selectedElement.json.size?.desktop || {};
+
         const updated = {
             ...selectedElement,
             json: {
                 ...selectedElement.json,
                 size: {
                     ...selectedElement.json.size,
-                    [dimension]: parsedValue,
+                    [viewMode]: { // <-- Chỉ cập nhật cho viewMode hiện tại
+                        ...currentViewSize,
+                        [dimension]: parsedValue,
+                    }
                 },
             },
         };
@@ -148,13 +157,20 @@ const PropertiesPanel = ({ selectedElement, onUpdateElement, isCollapsed, onTogg
             toast.error('Vị trí phải là số');
             return;
         }
+
+        // Lấy position của viewMode hiện tại, hoặc kế thừa từ desktop
+        const currentViewPosition = selectedElement.json.position?.[viewMode] || selectedElement.json.position?.desktop || {};
+
         const updated = {
             ...selectedElement,
             json: {
                 ...selectedElement.json,
                 position: {
                     ...selectedElement.json.position,
-                    [property]: parsedValue,
+                    [viewMode]: { // <-- Chỉ cập nhật cho viewMode hiện tại
+                        ...currentViewPosition,
+                        [property]: parsedValue,
+                    },
                 },
             },
         };
